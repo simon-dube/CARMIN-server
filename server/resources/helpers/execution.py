@@ -57,7 +57,7 @@ def execution_process(user: User, execution: Execution,
                 [
                     "bosh", "exec", "launch",
                     "-v{0}:{0}".format(user_data_dir),
-                    boutique_descriptor_path, inputs_path
+                    descriptor_path, inputs_path
                 ],
                 stdout=file_stdout,
                 stderr=file_stderr,

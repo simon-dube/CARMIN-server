@@ -74,7 +74,7 @@ def write_absolute_path_inputs_to_file(
         input_values: Dict,
         path_to_execution_dir: str) -> (str, ErrorCodeAndMessage):
     inputs_json_file = os.path.join(tempfile.gettempdir(),
-                                    execution_identifier)
+                                    "{}.json".format(execution_identifier))
     write_content = json.dumps(input_values)
     try:
         with open(inputs_json_file, 'w') as f:

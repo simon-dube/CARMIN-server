@@ -14,24 +14,23 @@ from server.resources.helpers.executions import get_execution_dir
 
 
 def start_execution(user: User, execution: Execution,
-                    boutique_descriptor_path: str, inputs_path: str, **kwargs):
+                descriptor_path: str, inputs_path: str, **kwargs):
     #Launch the execution process
-
     pool = Pool()
     pool.apply_async(
         func=execution_process,
         kwds={
             "user": user,
             "execution": execution,
-            "boutique_descriptor_path": boutique_descriptor_path,
+            "descriptor_path": descriptor_path,
             "inputs_path": inputs_path
-        },
-        callback=execution_success,
-        error_callback=execution_error)
+        })
+    pool.close()
 
 
 def execution_process(user: User, execution: Execution,
-                      boutique_descriptor_path: str, inputs_path: str):
+                      descriptor_path: str, inputs_path: str):
+
     #1 Write the current execution pid to database
     execution_process = ExecutionProcess(
         execution_identifier=execution.identifier, pid=current_process().pid)
@@ -50,9 +49,9 @@ def execution_process(user: User, execution: Execution,
 
     try:
         with open(os.path.join(execution_dir, "stdout.txt"),
-                  'wb') as file_stdout, open(
+                  'w') as file_stdout, open(
                       os.path.join(execution_dir, "stderr.txt"),
-                      'wb') as file_stderr:
+                      'w') as file_stderr:
 
             process = Popen(
                 [
@@ -60,11 +59,10 @@ def execution_process(user: User, execution: Execution,
                     "-v{0}:{0}".format(user_data_dir),
                     boutique_descriptor_path, inputs_path
                 ],
-                stderr=sys.stderr,
-                stdout=sys.stdout,
+                stdout=file_stdout,
+                stderr=file_stderr,
                 cwd=execution_dir)
 
-            # os.remove(inputs_path) # TODO: Validate when it is safe to delete the input file.
             process.wait()
 
     except OSError:
@@ -73,34 +71,10 @@ def execution_process(user: User, execution: Execution,
         db.session.commit()
         return
     finally:
+        os.remove(inputs_path) # Delete the temporary absolute input paths file
         process.kill()
 
     #4 Execution completed - Writing to database
     execution_db.status = ExecutionStatus.Finished
     db.session.delete(execution_process)
     db.session.commit()
-
-    # time_out = Timer(
-    #     execution_db.timeout
-    #     if execution_db.timeout else 10, execution_timeout, [process]
-    # )  #TODO: Look at default timeout in platform properties. Not required for now. Should it be?
-
-    # try:
-    #     time_out.start()
-    #     process.communicate()
-    #     time_out.cancel()
-    # finally:
-
-
-def execution_success(success):
-    return
-
-
-def execution_error(error):
-    return
-
-
-def execution_timeout(process):
-    process.kill()
-
-    return

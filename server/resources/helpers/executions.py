@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+import tempfile
 from boutiques import bosh
 from typing import Dict
 from server import app
@@ -17,7 +18,6 @@ from server.resources.helpers.pipelines import get_pipeline
 
 INPUTS_FILENAME = "inputs.json"
 EXECUTIONS_DIRNAME = "executions"
-ABSOLUTE_PATH_INPUTS_FILENAME = "inputs_abs.json"
 
 
 def create_user_executions_dir(username: str):
@@ -70,10 +70,11 @@ def write_inputs_to_file(execution: Execution,
 
 
 def write_absolute_path_inputs_to_file(
+        execution_identifier : str,
         input_values: Dict,
         path_to_execution_dir: str) -> (str, ErrorCodeAndMessage):
-    inputs_json_file = os.path.join(path_to_execution_dir,
-                                    ABSOLUTE_PATH_INPUTS_FILENAME)
+    inputs_json_file = os.path.join(tempfile.gettempdir(),
+                                    execution_identifier)
     write_content = json.dumps(input_values)
     try:
         with open(inputs_json_file, 'w') as f:
@@ -116,7 +117,7 @@ def create_absolute_path_inputs(username: str, execution_identifier: str,
                                                        input_values[key])
 
     execution_dir = get_execution_dir(username, execution_identifier)
-    path, error = write_absolute_path_inputs_to_file(input_values,
+    path, error = write_absolute_path_inputs_to_file(execution_identifier, input_values,
                                                      execution_dir)
     if error:
         return None, error

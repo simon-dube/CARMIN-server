@@ -6,6 +6,8 @@ except ImportError:
 import json
 from boutiques import bosh
 from server import app
+from server.resources.models.descriptor.descriptor_abstract import Descriptor
+from server.resources.models.descriptor.supported_descriptors import SUPPORTED_DESCRIPTORS
 from server.resources.models.pipeline import Pipeline, PipelineSchema
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageAdditionalDetails, ErrorCodeAndMessageFormatter,
@@ -76,22 +78,19 @@ def get_pipeline(pipeline_identifier: str,
     return None
 
 
-def export_boutiques_pipelines() -> (bool, str):
-    all_pipelines = get_all_pipelines("boutiques")
+def export_all_pipelines() -> (bool, str):
+    for descriptor_type in SUPPORTED_DESCRIPTORS:
+        all_pipelines = get_all_pipelines(descriptor_type)
 
-    for pipeline in all_pipelines:
-        carmin_pipeline = os.path.join(app.config['PIPELINE_DIRECTORY'],
-                                       "boutiques_{}".format(pipeline.name))
+        for pipeline in all_pipelines:
+            carmin_pipeline = os.path.join(app.config['PIPELINE_DIRECTORY'],
+                                           "{}_{}".format(
+                                               descriptor_type, pipeline.name))
 
-        try:
-            bosh(["export", "carmin", pipeline.path, carmin_pipeline])
-        except Exception:
-            return False, "Boutiques descriptor at '{}' is invalid and could not be translated. Please fix it before launching the server.".format(
-                pipeline.path)
-
-        if not os.path.exists(carmin_pipeline):
-            return False, "Boutiques descriptor at '{}' was exported without error, but no output file was created."
-
+            descriptor = Descriptor.descriptor_factory(descriptor_type)
+            export, error = descriptor.export(pipeline.path, carmin_pipeline)
+            if error:
+                return error
     return True, None
 
 

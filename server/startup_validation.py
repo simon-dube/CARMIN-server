@@ -13,7 +13,7 @@ from .resources.models.platform_properties import PlatformPropertiesSchema
 from server import app
 from server.database import db
 from .database.models.user import User, Role
-from server.resources.helpers.pipelines import export_boutiques_pipelines
+from server.resources.helpers.pipelines import export_all_pipelines
 from server.common.error_codes_and_messages import PATH_EXISTS
 from server.platform_properties import PLATFORM_PROPERTIES
 
@@ -108,7 +108,7 @@ def generate_admin_password(password_length=16):
 
 
 def export_pipelines():
-    success, error = export_boutiques_pipelines()
+    success, error = export_all_pipelines()
 
     if not success:
         raise EnvironmentError(error)

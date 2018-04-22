@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from server.resources.models.descriptor.supported_descriptors import SUPPORTED_DESCRIPTORS
 
 
 class Descriptor(ABC):
@@ -18,6 +17,7 @@ class Descriptor(ABC):
     def execute(cls, user_data_dir, descriptor, input_data):
         pass
 
-
-def create_descriptor(self, typ):
-    return SUPPORTED_DESCRIPTORS.get(typ.lower())()
+    @classmethod
+    def descriptor_factory(cls, typ):
+        from server.resources.models.descriptor.supported_descriptors import SUPPORTED_DESCRIPTORS
+        return SUPPORTED_DESCRIPTORS.get(typ.lower())()

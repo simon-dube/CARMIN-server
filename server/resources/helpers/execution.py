@@ -34,7 +34,9 @@ def execution_process(user: User, execution: Execution, descriptor_path: str,
 
     # 1 Write the current execution pid to database
     execution_process = ExecutionProcess(
-        execution_identifier=execution.identifier, pid=current_process().pid)
+        execution_identifier=execution.identifier,
+        pid=current_process().pid,
+        is_execution=False)
     db.session.add(execution_process)
     db.session.commit()
 
@@ -66,25 +68,41 @@ def execution_process(user: User, execution: Execution, descriptor_path: str,
                 stderr=file_stderr,
                 cwd=execution_dir)
 
-            process.wait(timeout=timeout)
+            # Insert Popen process in DB
+            execution_process_popen = ExecutionProcess(
+                execution_identifier=execution.identifier,
+                pid=process.pid,
+                is_execution=True)
+            db.session.add(execution_process_popen)
+            db.session.commit()
 
-        except TimeoutExpired as timeout_expired:
+            process.wait(timeout=timeout)
+        except TimeoutExpired as timeout_expired:  # Timeout
             process.kill()
             file_stderr.writelines(
                 "Execution timed out after {} seconds".format(
                     timeout_expired.timeout))
-            return
-        except Exception:
-            execution_db.status = ExecutionStatus.ExecutionFailed
-            db.session.delete(execution_process)
-            db.session.commit()
+            ExecutionFailed(execution_db)
+        except Exception:  # Any other execution issue
+            ExecutionFailed(execution_db)
             process.kill()
-            return
+        else:
+            # 4 Execution successfully completed - Writing to database
+            execution_db.status = ExecutionStatus.Finished
+            db.session.commit()
         finally:
-            os.remove(
-                inputs_path)  # Delete the temporary absolute input paths file
+            # Delete Execution processes from the database
+            db.session.delete(execution_process)
+            db.session.delete(execution_process_popen)
+            # Insert endtime
+            execution_db.end_date = current_milli_time()
+            db.session.commit()
 
-    # 4 Execution completed - Writing to database
-    execution_db.status = ExecutionStatus.Finished
+            # Delete temporary absolute input paths files
+            os.remove(inputs_path)
+
+
+def ExecutionFailed(execution_db):
+    execution_db.status = ExecutionStatus.ExecutionFailed
     db.session.delete(execution_process)
     db.session.commit()

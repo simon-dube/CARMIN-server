@@ -42,6 +42,7 @@ class Executions(Resource):
             return error
 
         try:
+            # Insert new execution to DB
             new_execution = Execution(
                 name=model.name,
                 pipeline_identifier=model.pipeline_identifier,
@@ -52,20 +53,25 @@ class Executions(Resource):
             db.session.add(new_execution)
             db.session.commit()
 
+            # Execution directory creation
             path, error = create_execution_directory(new_execution, user)
             if error:
                 db.session.rollback()
                 return error
 
+            # Writing inputs to inputs file in execution directory
             error = write_inputs_to_file(model, path)
             if error:
                 delete_execution_directory(path)
                 db.session.rollback()
                 return error
 
+            # Writing execution to DB
             execution_db = get_execution(new_execution.identifier, db.session)
             if not execution_db:
                 return UNEXPECTED_ERROR
+
+            # Get execution back as a model from the DB for response
             execution, error = get_execution_as_model(user.username,
                                                       execution_db)
             if error:

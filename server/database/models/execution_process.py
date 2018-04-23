@@ -9,10 +9,12 @@ class ExecutionProcess(db.Model):
     Args:
         execution_identifier (str):
         pid (int):
+        is_execution(bool):
 
     Attributes:
         execution_identifier (str):
         pid (int):
+        is_execution (bool):
     """
 
     execution_identifier = Column(

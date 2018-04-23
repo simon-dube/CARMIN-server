@@ -82,3 +82,9 @@ CANNOT_REPLAY_EXECUTION = ErrorCodeAndMessage(
     135, "An execution cannot be replayed. Current status: '{}'")
 INVALID_EXECUTION_TIMEOUT = ErrorCodeAndMessage(
     140, "Invalid execution timeout. Must be between {} and {} seconds.")
+CANNOT_KILL_NOT_RUNNING_EXECUTION = ErrorCodeAndMessage(
+    145, "Cannot kill a non running execution. Current status: '{}'")
+CANNOT_KILL_FINISHING_EXECUTION = ErrorCodeAndMessage(
+    150,
+    "The execution processes are not running, thus the execution is most probably finishing and cannot be killed."
+)

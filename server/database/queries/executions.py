@@ -1,5 +1,6 @@
 from typing import List
 from server.database.models.execution import Execution
+from server.database.models.execution_process import ExecutionProcess
 
 
 def get_all_executions_for_user(username: str, db_session) -> List[Execution]:
@@ -16,3 +17,9 @@ def get_execution(identifier: str, db_session) -> Execution:
 def get_execution_count_for_user(username: str, db_session) -> int:
     return db_session.query(Execution).filter(
         Execution.creator_username == username).count()
+
+
+def get_execution_processes(execution_identifier: str,
+                            db_session) -> List[ExecutionProcess]:
+    return db_session.query(ExecutionProcess).filter(
+        ExecutionProcess.execution_identifier == execution_identifier)

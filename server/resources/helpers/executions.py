@@ -7,12 +7,14 @@ from typing import Dict
 from server import app
 from server.database.models.user import User
 from server.database.models.execution import Execution as ExecutionDB
+from server.platform_properties import PLATFORM_PROPERTIES
 from server.resources.models.error_code_and_message import ErrorCodeAndMessage
 from server.resources.models.pipeline import Pipeline, PipelineSchema
 from server.common.error_codes_and_messages import (
     UNAUTHORIZED, INVALID_INPUT_FILE, INVALID_PATH, INVALID_MODEL_PROVIDED,
     INVALID_PIPELINE_IDENTIFIER, EXECUTION_IDENTIFIER_MUST_NOT_BE_SET,
-    INVALID_QUERY_PARAMETER, UNEXPECTED_ERROR, ErrorCodeAndMessageFormatter)
+    INVALID_QUERY_PARAMETER, INVALID_EXECUTION_TIMEOUT, UNEXPECTED_ERROR,
+    ErrorCodeAndMessageFormatter)
 from server.resources.models.execution import Execution
 from server.resources.helpers.pipelines import get_pipeline
 
@@ -70,8 +72,7 @@ def write_inputs_to_file(execution: Execution,
 
 
 def write_absolute_path_inputs_to_file(
-        execution_identifier : str,
-        input_values: Dict,
+        execution_identifier: str, input_values: Dict,
         path_to_execution_dir: str) -> (str, ErrorCodeAndMessage):
     inputs_json_file = os.path.join(tempfile.gettempdir(),
                                     "{}.json".format(execution_identifier))
@@ -117,8 +118,8 @@ def create_absolute_path_inputs(username: str, execution_identifier: str,
                                                        input_values[key])
 
     execution_dir = get_execution_dir(username, execution_identifier)
-    path, error = write_absolute_path_inputs_to_file(execution_identifier, input_values,
-                                                     execution_dir)
+    path, error = write_absolute_path_inputs_to_file(
+        execution_identifier, input_values, execution_dir)
     if error:
         return None, error
     return path, None
@@ -160,7 +161,7 @@ def get_execution_as_model(username: str,
     return exe, None
 
 
-def validate_request_model(model: dict,
+def validate_request_model(model: Execution,
                            url_root: str) -> (bool, ErrorCodeAndMessage):
     if model.identifier:
         return False, EXECUTION_IDENTIFIER_MUST_NOT_BE_SET
@@ -172,6 +173,19 @@ def validate_request_model(model: dict,
     if not files_exist:
         error_code_and_message = ErrorCodeAndMessageFormatter(
             INVALID_INPUT_FILE, error)
+        return False, error_code_and_message
+
+    # Timeout validation
+    min_authorized_execution_timeout = PLATFORM_PROPERTIES.get(
+        "minAuthorizedExecutionTimeout", 0)
+    max_authorized_execution_timeout = PLATFORM_PROPERTIES.get(
+        "maxAuthorizedExecutionTimeout", 0)
+    if model.timeout and ((max_authorized_execution_timeout > 0 and
+                           model.timeout > max_authorized_execution_timeout) or
+                          (model.timeout < min_authorized_execution_timeout)):
+        error_code_and_message = ErrorCodeAndMessageFormatter(
+            INVALID_EXECUTION_TIMEOUT, min_authorized_execution_timeout,
+            max_authorized_execution_timeout or "(no maximum timeout)")
         return False, error_code_and_message
     return True, None
 

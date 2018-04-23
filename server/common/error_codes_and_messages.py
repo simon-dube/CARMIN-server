@@ -80,3 +80,5 @@ CANNOT_MODIFY_PARAMETER = ErrorCodeAndMessage(
 INVALID_INVOCATION = ErrorCodeAndMessage(130, "Invalid invocation")
 CANNOT_REPLAY_EXECUTION = ErrorCodeAndMessage(
     135, "An execution cannot be replayed. Current status: '{}'")
+INVALID_EXECUTION_TIMEOUT = ErrorCodeAndMessage(
+    140, "Invalid execution timeout. Must be between {} and {} seconds.")

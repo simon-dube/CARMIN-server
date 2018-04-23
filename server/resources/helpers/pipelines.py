@@ -87,7 +87,8 @@ def export_all_pipelines() -> (bool, str):
                                            "{}_{}".format(
                                                descriptor_type, pipeline.name))
 
-            descriptor = Descriptor.descriptor_factory(descriptor_type)
+            descriptor = Descriptor.descriptor_factory_from_type(
+                descriptor_type)
             export, error = descriptor.export(pipeline.path, carmin_pipeline)
             if error:
                 return False, error

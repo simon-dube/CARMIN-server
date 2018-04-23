@@ -11,6 +11,7 @@ from server.database import db
 from server.database.models.execution_process import ExecutionProcess
 from server.resources.helpers.path import get_user_data_directory
 from server.resources.helpers.executions import get_execution_dir
+from server.resources.models.descriptor.descriptor_abstract import Descriptor
 
 
 def start_execution(user: User, execution: Execution, descriptor_path: str,
@@ -56,12 +57,11 @@ def execution_process(user: User, execution: Execution, descriptor_path: str,
             execution_dir, "stdout.txt"), 'w') as file_stdout, open(
                 os.path.join(execution_dir, "stderr.txt"), 'w') as file_stderr:
         try:
+            descriptor = Descriptor.descriptor_factory_from_path(
+                descriptor_path)
             process = Popen(
-                [
-                    "bosh", "exec", "launch",
-                    "-v{0}:{0}".format(user_data_dir), descriptor_path,
-                    inputs_path
-                ],
+                descriptor.execute(user_data_dir, descriptor_path,
+                                   inputs_path),
                 stdout=file_stdout,
                 stderr=file_stderr,
                 cwd=execution_dir)

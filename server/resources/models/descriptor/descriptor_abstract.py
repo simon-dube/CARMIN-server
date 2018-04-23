@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import os
 
 
 class Descriptor(ABC):
@@ -18,6 +19,12 @@ class Descriptor(ABC):
         pass
 
     @classmethod
-    def descriptor_factory(cls, typ):
+    def descriptor_factory_from_type(cls, typ):
         from server.resources.models.descriptor.supported_descriptors import SUPPORTED_DESCRIPTORS
         return SUPPORTED_DESCRIPTORS.get(typ.lower())()
+
+    @classmethod
+    def descriptor_factory_from_path(cls, path_to_descriptor):
+        parent_dir = os.path.dirname(path_to_descriptor)
+        return Descriptor.descriptor_factory_from_type(
+            os.path.basename(parent_dir))

@@ -20,6 +20,7 @@ from server.resources.helpers.pipelines import get_pipeline
 
 INPUTS_FILENAME = "inputs.json"
 EXECUTIONS_DIRNAME = "executions"
+DESCRIPTOR_FILENAME = "descriptor.json"
 
 
 def create_user_executions_dir(username: str):
@@ -214,8 +215,18 @@ def filter_executions(executions, offset, limit):
     return executions, None
 
 
-def copy_descriptor_to_execution_dir(execution_path, descriptor_path):
-    pass
+def copy_descriptor_to_execution_dir(execution_path,
+                                     descriptor_path) -> ErrorCodeAndMessage:
+    if not os.path.exists(descriptor_path):
+        return PATH_DOES_NOT_EXIST
+
+    try:
+        shutil.copyfile(descriptor_path,
+                        os.path.join(execution_path, DESCRIPTOR_FILENAME))
+    except OSError:
+        return UNEXPECTED_ERROR
+
+    return None
 
 
 from .path import (create_directory, get_user_data_directory, is_safe_path,

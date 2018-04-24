@@ -81,6 +81,10 @@ class Executions(Resource):
             # Copying pipeline descriptor to execution folder
             error = copy_descriptor_to_execution_dir(execution_path,
                                                      descriptor_path)
+            if error:
+                delete_execution_directory(execution_path)
+                db.session.rollback()
+                return UNEXPECTED_ERROR
 
             # Get execution from DB (for safe measure)
             execution_db = get_execution(new_execution.identifier, db.session)

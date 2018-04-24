@@ -13,8 +13,8 @@ class PipelineBoutiquesDescriptor(Resource):
     # Moreover, there is no BoutiquesSchema yet. If it was to be added, this should be changed.
     @login_required
     def get(self, user, pipeline_identifier):
-        (boutiques_descriptor_path, descriptor_type) error = get_original_descriptor_path_and_type(
-            pipeline_identifier)
+        (boutiques_descriptor_path, descriptor_type
+         ), error = get_original_descriptor_path_and_type(pipeline_identifier)
 
         if error:
             return marshal(error), 400

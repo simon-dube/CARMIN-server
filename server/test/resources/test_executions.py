@@ -8,7 +8,7 @@ from server.common.error_codes_and_messages import (
     INVALID_MODEL_PROVIDED, INVALID_INPUT_FILE, INVALID_QUERY_PARAMETER)
 from server.resources.models.pipeline import PipelineSchema
 from server.resources.models.execution import ExecutionSchema
-from server.test.fakedata.pipelines import PIPELINE_FOUR
+from server.test.fakedata.pipelines import BOUTIQUES_ORIGINAL, BOUTIQUES_CONVERTED
 from server.test.fakedata.executions import (
     POST_VALID_EXECUTION, POST_INVALID_EXECUTION_FILE_NOT_EXIST,
     POST_INVALID_EXECUTION_ARRAY_FILE_NOT_EXIST, POST_INVALID_IDENTIFIER_SET,
@@ -24,14 +24,17 @@ def test_config(tmpdir_factory, session):
     session.commit()
 
     pipelines_root = tmpdir_factory.mktemp('pipelines')
+    pipelines_root.join('boutiques_pipeline1.json').write(
+        json.dumps(BOUTIQUES_CONVERTED))
+    boutiques_dir = pipelines_root.mkdir("boutiques")
+    boutiques_dir.join('pipeline1.json').write(json.dumps(BOUTIQUES_ORIGINAL))
+    app.config['PIPELINE_DIRECTORY'] = str(pipelines_root)
+
     data_root = tmpdir_factory.mktemp('data')
-    pipelines_root.join('pipeline1.json').write(
-        json.dumps(PipelineSchema().dump(PIPELINE_FOUR).data))
     user_dir = data_root.mkdir(standard_user().username)
     user_dir.join('test.txt').write('test file')
     user_execution_dir = user_dir.mkdir('executions')
     app.config['DATA_DIRECTORY'] = str(data_root)
-    app.config['PIPELINE_DIRECTORY'] = str(pipelines_root)
 
 
 @pytest.fixture
@@ -116,18 +119,14 @@ class TestExecutionsResource():
 
     def test_get_without_executions(self, test_client):
         response = test_client.get(
-            '/executions', headers={
-                "apiKey": standard_user().api_key
-            })
+            '/executions', headers={"apiKey": standard_user().api_key})
         json_response = load_json_data(response)
         executions = ExecutionSchema(many=True).load(json_response).data
         assert not executions
 
     def test_get_with_executions(self, test_client, number_of_executions):
         response = test_client.get(
-            '/executions', headers={
-                "apiKey": standard_user().api_key
-            })
+            '/executions', headers={"apiKey": standard_user().api_key})
         json_response = load_json_data(response)
         executions, error = ExecutionSchema(many=True).load(json_response)
         assert not error
@@ -137,9 +136,7 @@ class TestExecutionsResource():
         offset = 6
         response = test_client.get(
             '/executions?offset={}'.format(offset),
-            headers={
-                "apiKey": standard_user().api_key
-            })
+            headers={"apiKey": standard_user().api_key})
         json_response = load_json_data(response)
         assert len(json_response) == number_of_executions - offset
 
@@ -147,9 +144,7 @@ class TestExecutionsResource():
         offset = "invalid"
         response = test_client.get(
             '/executions?offset={}'.format(offset),
-            headers={
-                "apiKey": standard_user().api_key
-            })
+            headers={"apiKey": standard_user().api_key})
         error = error_from_response(response)
 
         expected_error_code_and_message = copy.deepcopy(
@@ -163,9 +158,7 @@ class TestExecutionsResource():
         offset = 1000
         response = test_client.get(
             '/executions?offset={}'.format(offset),
-            headers={
-                "apiKey": standard_user().api_key
-            })
+            headers={"apiKey": standard_user().api_key})
         json_response = load_json_data(response)
         assert len(json_response) == 0
 
@@ -173,9 +166,7 @@ class TestExecutionsResource():
         offset = -10
         response = test_client.get(
             '/executions?offset={}'.format(offset),
-            headers={
-                "apiKey": standard_user().api_key
-            })
+            headers={"apiKey": standard_user().api_key})
         error = error_from_response(response)
 
         expected_error_code_and_message = copy.deepcopy(
@@ -188,9 +179,7 @@ class TestExecutionsResource():
         limit = 4
         response = test_client.get(
             '/executions?limit={}'.format(limit),
-            headers={
-                "apiKey": standard_user().api_key
-            })
+            headers={"apiKey": standard_user().api_key})
         json_response = load_json_data(response)
         assert len(json_response) == limit
 
@@ -198,9 +187,7 @@ class TestExecutionsResource():
         limit = "invalid"
         response = test_client.get(
             '/executions?limit={}'.format(limit),
-            headers={
-                "apiKey": standard_user().api_key
-            })
+            headers={"apiKey": standard_user().api_key})
         error = error_from_response(response)
 
         expected_error_code_and_message = copy.deepcopy(
@@ -213,9 +200,7 @@ class TestExecutionsResource():
         limit = -10
         response = test_client.get(
             '/executions?limit={}'.format(limit),
-            headers={
-                "apiKey": standard_user().api_key
-            })
+            headers={"apiKey": standard_user().api_key})
 
         error = error_from_response(response)
 

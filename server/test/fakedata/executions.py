@@ -33,17 +33,13 @@ POST_INVALID_EXECUTION_ARRAY_FILE_NOT_EXIST = Execution(
 POST_INVALID_EXECUTION_IDENTIFIER_NOT_EXIST = Execution(
     name="invalid_execution",
     pipeline_identifier="not_exist",
-    input_values={
-        "first": "value"
-    })
+    input_values={"first": "value"})
 
 POST_INVALID_IDENTIFIER_SET = Execution(
     name="invalid_execution",
     pipeline_identifier="pipeline1",
     identifier="an_identifier",
-    input_values={
-        "first": "value"
-    })
+    input_values={"first": "value"})
 
 POST_INVALID_MODEL = {"name": "invalid_execution"}
 

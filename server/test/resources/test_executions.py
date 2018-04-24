@@ -1,5 +1,9 @@
 import copy
 import os
+try:
+    from os import scandir, walk
+except ImportError:
+    from scandir import scandir, walk
 import json
 import pytest
 from server import app
@@ -16,6 +20,7 @@ from server.test.fakedata.executions import (
 from server.test.fakedata.users import standard_user
 from server.test.utils import load_json_data, error_from_response
 from server.test.conftest import test_client, session
+from server.resources.helpers.executions import INPUTS_FILENAME, DESCRIPTOR_FILENAME
 
 
 @pytest.fixture(autouse=True)
@@ -58,8 +63,14 @@ class TestExecutionsResource():
             '/executions',
             headers={"apiKey": standard_user().api_key},
             data=json.dumps(ExecutionSchema().dump(POST_VALID_EXECUTION).data))
-        assert os.listdir(user_execution_dir)
         assert response.status_code == 200
+
+        json_response = load_json_data(response)
+        execution = ExecutionSchema().load(json_response).data
+        execution_dir = os.path.join(user_execution_dir, execution.identifier)
+        assert os.path.isdir(execution_dir)
+        assert INPUTS_FILENAME in os.listdir(execution_dir)
+        assert DESCRIPTOR_FILENAME in os.listdir(execution_dir)
 
     def test_post_file_doesnt_exist(self, test_client):
         user_execution_dir = os.path.join(app.config['DATA_DIRECTORY'],

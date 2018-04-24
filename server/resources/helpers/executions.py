@@ -214,6 +214,10 @@ def filter_executions(executions, offset, limit):
     return executions, None
 
 
+def copy_descriptor_to_execution_dir(execution_path, descriptor_path):
+    pass
+
+
 from .path import (create_directory, get_user_data_directory, is_safe_path,
                    is_data_accessible, platform_path_exists,
                    path_from_data_dir)

@@ -3,9 +3,12 @@ from sqlalchemy.exc import IntegrityError
 from server.database import db
 from server.database.models.execution import Execution, ExecutionStatus
 from server.common.error_codes_and_messages import UNEXPECTED_ERROR
+from server.resources.helpers.pipelines import (
+    get_original_descriptor_path_and_type)
 from server.resources.helpers.executions import (
     write_inputs_to_file, create_execution_directory, get_execution_as_model,
-    validate_request_model, filter_executions, delete_execution_directory)
+    validate_request_model, filter_executions, delete_execution_directory,
+    copy_descriptor_to_execution_dir)
 from server.database.queries.executions import (get_all_executions_for_user,
                                                 get_execution)
 from .models.execution import ExecutionSchema
@@ -42,10 +45,18 @@ class Executions(Resource):
             return error
 
         try:
+            # Get the descriptor path and type
+            (descriptor_path,
+             descriptor_type), error = get_original_descriptor_path_and_type(
+                 model.pipeline_identifier)
+            if error:
+                return error
+
             # Insert new execution to DB
             new_execution = Execution(
                 name=model.name,
                 pipeline_identifier=model.pipeline_identifier,
+                descriptor=descriptor_type,
                 timeout=model.timeout,
                 status=ExecutionStatus.Initializing,
                 study_identifier=model.study_identifier,
@@ -54,26 +65,22 @@ class Executions(Resource):
             db.session.commit()
 
             # Execution directory creation
-            path, error = create_execution_directory(new_execution, user)
+            execution_path, error = create_execution_directory(
+                new_execution, user)
             if error:
                 db.session.rollback()
                 return error
 
             # Writing inputs to inputs file in execution directory
-            error = write_inputs_to_file(model, path)
+            error = write_inputs_to_file(model, execution_path)
             if error:
-                delete_execution_directory(path)
+                delete_execution_directory(execution_path)
                 db.session.rollback()
                 return error
 
             # Copying pipeline descriptor to execution folder
-            # Get the descriptor path
-            (descriptor_path,
-             descriptor_type), error = get_original_descriptor_path_and_type(
-                 execution.pipeline_identifier)
-            if error:
-                return error
-            error = copy_descriptor_to_execution_dir(model.pipeline_identifier)
+            error = copy_descriptor_to_execution_dir(execution_path,
+                                                     descriptor_path)
 
             # Get execution from DB (for safe measure)
             execution_db = get_execution(new_execution.identifier, db.session)

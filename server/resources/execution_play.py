@@ -35,8 +35,9 @@ class ExecutionPlay(Resource):
             return UNEXPECTED_ERROR
 
         # Get the descriptor path
-        (descriptor_path, descriptor_type) error = get_original_descriptor_path_and_type(
-            execution.pipeline_identifier)
+        (descriptor_path,
+         descriptor_type), error = get_original_descriptor_path_and_type(
+             execution.pipeline_identifier)
         if error:
             return error
 

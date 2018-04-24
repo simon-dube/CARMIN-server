@@ -66,7 +66,16 @@ class Executions(Resource):
                 db.session.rollback()
                 return error
 
-            # Writing execution to DB
+            # Copying pipeline descriptor to execution folder
+            # Get the descriptor path
+            (descriptor_path,
+             descriptor_type), error = get_original_descriptor_path_and_type(
+                 execution.pipeline_identifier)
+            if error:
+                return error
+            error = copy_descriptor_to_execution_dir(model.pipeline_identifier)
+
+            # Get execution from DB (for safe measure)
             execution_db = get_execution(new_execution.identifier, db.session)
             if not execution_db:
                 return UNEXPECTED_ERROR

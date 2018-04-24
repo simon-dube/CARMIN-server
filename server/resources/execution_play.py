@@ -12,7 +12,7 @@ from server.common.error_codes_and_messages import (
 from server.resources.helpers.executions import (
     get_execution_as_model, get_execution_dir, create_absolute_path_inputs)
 from server.resources.helpers.execution import start_execution
-from server.resources.helpers.pipelines import get_original_descriptor_path
+from server.resources.helpers.pipelines import get_original_descriptor_path_and_type
 
 
 class ExecutionPlay(Resource):
@@ -34,8 +34,8 @@ class ExecutionPlay(Resource):
         if error:
             return UNEXPECTED_ERROR
 
-        # Get the boutiques descriptor path
-        boutiques_descriptor_path, error = get_original_descriptor_path(
+        # Get the descriptor path
+        (descriptor_path, descriptor_type) error = get_original_descriptor_path_and_type(
             execution.pipeline_identifier)
         if error:
             return error
@@ -51,10 +51,7 @@ class ExecutionPlay(Resource):
         # We are ready to start the execution
         # First, let's validate it using invocation
         try:
-            bosh([
-                "invocation", boutiques_descriptor_path, "-i",
-                modified_inputs_path
-            ])
+            bosh(["invocation", descriptor_path, "-i", modified_inputs_path])
         except ValidationError as e:
             execution_db.status = ExecutionStatus.InitializationFailed
             db.session.commit()
@@ -62,6 +59,5 @@ class ExecutionPlay(Resource):
                 INVALID_INVOCATION, e.message)
 
         # The execution is valid and we are now ready to start it
-        start_execution(user, execution, boutiques_descriptor_path,
-                        modified_inputs_path)
+        start_execution(user, execution, descriptor_path, modified_inputs_path)
         pass

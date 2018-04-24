@@ -95,8 +95,8 @@ def export_all_pipelines() -> (bool, str):
     return True, None
 
 
-def get_original_descriptor_path(
-        pipeline_identifier: str) -> (str, ErrorCodeAndMessage):
+def get_original_descriptor_path_and_type(
+        pipeline_identifier: str) -> ((str, str), ErrorCodeAndMessage):
 
     carmin_descriptor_path = get_pipeline(pipeline_identifier, True)
 
@@ -110,7 +110,7 @@ def get_original_descriptor_path(
     original_descriptor_path = os.path.join(app.config['PIPELINE_DIRECTORY'],
                                             descriptor_type,
                                             original_descriptor_filename)
-    return original_descriptor_path, None
+    return (original_descriptor_path, descriptor_type), None
 
 
 def get_descriptor_json(pipeline_path: str) -> (any, ErrorCodeAndMessage):

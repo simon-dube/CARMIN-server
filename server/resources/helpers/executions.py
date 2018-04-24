@@ -229,6 +229,10 @@ def copy_descriptor_to_execution_dir(execution_path,
     return None
 
 
+def get_descriptor_path(execution_path: str) -> str:
+    return os.path.join(execution_path, DESCRIPTOR_FILENAME)
+
+
 from .path import (create_directory, get_user_data_directory, is_safe_path,
                    is_data_accessible, platform_path_exists,
                    path_from_data_dir)

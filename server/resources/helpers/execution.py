@@ -10,11 +10,11 @@ from server.resources.models.execution import Execution
 from server.database import db
 from server.database.models.execution_process import ExecutionProcess
 from server.resources.helpers.path import get_user_data_directory
-from server.resources.helpers.executions import get_execution_dir
+from server.resources.helpers.executions import get_execution_dir, get_descriptor_path
 from server.resources.models.descriptor.descriptor_abstract import Descriptor
 
 
-def start_execution(user: User, execution: Execution, descriptor_path: str,
+def start_execution(user: User, execution: Execution, descriptor: Descriptor,
                     inputs_path: str):
     # Launch the execution process
     pool = Pool()
@@ -23,13 +23,13 @@ def start_execution(user: User, execution: Execution, descriptor_path: str,
         kwds={
             "user": user,
             "execution": execution,
-            "descriptor_path": descriptor_path,
+            "descriptor": descriptor,
             "inputs_path": inputs_path
         })
     pool.close()
 
 
-def execution_process(user: User, execution: Execution, descriptor_path: str,
+def execution_process(user: User, execution: Execution, descriptor: Descriptor,
                       inputs_path: str):
 
     # 1 Write the current execution pid to database
@@ -49,6 +49,7 @@ def execution_process(user: User, execution: Execution, descriptor_path: str,
     # 3 Launch the bosh execution
     user_data_dir = get_user_data_directory(user.username)
     execution_dir = get_execution_dir(user.username, execution.identifier)
+    descriptor_path = get_descriptor_path(execution_dir)
     timeout = execution.timeout
     if timeout is None:
         timeout = PLATFORM_PROPERTIES.get("defaultExecutionTimeout")
@@ -59,8 +60,6 @@ def execution_process(user: User, execution: Execution, descriptor_path: str,
             execution_dir, "stdout.txt"), 'w') as file_stdout, open(
                 os.path.join(execution_dir, "stderr.txt"), 'w') as file_stderr:
         try:
-            descriptor = Descriptor.descriptor_factory_from_path(
-                descriptor_path)
             process = Popen(
                 descriptor.execute(user_data_dir, descriptor_path,
                                    inputs_path),

@@ -10,9 +10,10 @@ from server.common.error_codes_and_messages import (
     EXECUTION_NOT_FOUND, UNAUTHORIZED, UNEXPECTED_ERROR, INVALID_INVOCATION,
     CANNOT_REPLAY_EXECUTION)
 from server.resources.helpers.executions import (
-    get_execution_as_model, get_execution_dir, create_absolute_path_inputs)
+    get_execution_as_model, get_execution_dir, create_absolute_path_inputs,
+    get_descriptor_path)
 from server.resources.helpers.execution import start_execution
-from server.resources.helpers.pipelines import get_original_descriptor_path_and_type
+from server.resources.models.descriptor.descriptor_abstract import Descriptor
 
 
 class ExecutionPlay(Resource):
@@ -35,30 +36,30 @@ class ExecutionPlay(Resource):
             return UNEXPECTED_ERROR
 
         # Get the descriptor path
-        (descriptor_path,
-         descriptor_type), error = get_original_descriptor_path_and_type(
-             execution.pipeline_identifier)
-        if error:
-            return error
+        execution_dir = get_execution_dir(user.username, execution.identifier)
+        descriptor_path = get_descriptor_path(execution_dir)
+
+        # Get appriopriate descriptor object
+        descriptor = Descriptor.descriptor_factory_from_type(
+            execution_db.descriptor)
 
         # Create a version of the inputs file with correct links
         modified_inputs_path, error = create_absolute_path_inputs(
             user.username, execution.identifier, execution.pipeline_identifier,
             request.url_root)
-
         if error:
             return UNEXPECTED_ERROR
 
         # We are ready to start the execution
         # First, let's validate it using invocation
-        try:
-            bosh(["invocation", descriptor_path, "-i", modified_inputs_path])
-        except ValidationError as e:
+        success, error = descriptor.validate(descriptor_path,
+                                             modified_inputs_path)
+        if not success:
             execution_db.status = ExecutionStatus.InitializationFailed
             db.session.commit()
             return ErrorCodeAndMessageAdditionalDetails(
-                INVALID_INVOCATION, e.message)
+                INVALID_INVOCATION, error.message)
 
         # The execution is valid and we are now ready to start it
-        start_execution(user, execution, descriptor_path, modified_inputs_path)
+        start_execution(user, execution, descriptor, modified_inputs_path)
         pass

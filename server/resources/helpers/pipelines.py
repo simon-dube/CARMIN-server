@@ -101,7 +101,7 @@ def get_original_descriptor_path_and_type(
     carmin_descriptor_path = get_pipeline(pipeline_identifier, True)
 
     if not carmin_descriptor_path:
-        return None, INVALID_PIPELINE_IDENTIFIER
+        return (None, None), INVALID_PIPELINE_IDENTIFIER
 
     descriptor_type = carmin_descriptor_path.name[:carmin_descriptor_path.name.
                                                   index("_")]

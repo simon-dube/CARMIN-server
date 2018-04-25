@@ -21,7 +21,7 @@ from server.resources.helpers.pipelines import get_pipeline
 INPUTS_FILENAME = "inputs.json"
 EXECUTIONS_DIRNAME = "executions"
 DESCRIPTOR_FILENAME = "descriptor.json"
-CARMIN_FILES_FOLDER = "carmin-files"
+CARMIN_FILES_FOLDER = ".carmin-files"
 
 STDOUT_FILENAME = "stdout.txt"
 STDERR_FILENAME = "stderr.txt"

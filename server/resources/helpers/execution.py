@@ -87,7 +87,7 @@ def execution_process(user: User, execution: Execution, descriptor: Descriptor,
             process.kill()
         else:
             # 4 Execution successfully completed - Writing to database
-            execution_db.status = ExecutionStatus.Finished
+            execution_db.status = ExecutionStatus.Unknown
             db.session.commit()
         finally:
             # Delete Execution processes from the database

@@ -4,6 +4,7 @@ import mimetypes
 from server import app
 from flask_restful import request
 from marshmallow import Schema, fields, post_load, post_dump
+from server.resources.helpers.execution import extract_execution_identifier_from_path
 
 
 class PathSchema(Schema):
@@ -86,6 +87,8 @@ class Path():
             mime_type, _ = mimetypes.guess_type(absolute_path_to_resource)
 
         # TODO: Add execution_id to Path object
+        execution_id = extract_execution_identifier_from_path(
+            absolute_path_to_resource)
 
         rel_path = PurePath(
             os.path.relpath(absolute_path_to_resource,

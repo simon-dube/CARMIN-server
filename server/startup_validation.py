@@ -169,7 +169,7 @@ def purge_executions():
         kill_execution_processes(execution_parent_processes)
         kill_execution_processes(actual_execution_processes)
 
-        e.status = ExecutionStatus.ExecutionFailed
+        e.status = ExecutionStatus.Unknown
         for execution_process in execution_processes:
             db.session.delete(execution_process)
         db.session.commit()

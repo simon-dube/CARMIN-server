@@ -10,7 +10,7 @@ from server.common.error_codes_and_messages import (
     CANNOT_REPLAY_EXECUTION)
 from server.resources.helpers.executions import (
     get_execution_as_model, create_absolute_path_inputs, get_descriptor_path)
-from server.resources.helpers.execution import start_execution
+from server.resources.helpers.execution_play import start_execution
 from server.resources.models.descriptor.descriptor_abstract import Descriptor
 
 

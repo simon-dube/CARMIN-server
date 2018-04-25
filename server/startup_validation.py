@@ -18,12 +18,14 @@ from .database.models.execution_process import ExecutionProcess
 from .database.queries.executions import get_execution_processes
 from server.resources.helpers.pipelines import export_all_pipelines
 from server.common.error_codes_and_messages import PATH_EXISTS
+from server.resources.models.descriptor.supported_descriptors import SUPPORTED_DESCRIPTORS
 from server.platform_properties import PLATFORM_PROPERTIES
 from server.resources.helpers.execution_kill import (get_process_alive_count,
                                                      kill_execution_processes)
 
 
 def start_up():
+    create_dirs_for_supported_descriptors()
     pipeline_and_data_directory_present()
     export_pipelines()
     properties_validation()
@@ -118,6 +120,19 @@ def export_pipelines():
 
     if not success:
         raise EnvironmentError(error)
+
+
+def create_dirs_for_supported_descriptors():
+    pipeline_path = app.config['PIPELINE_DIRECTORY']
+    for key in SUPPORTED_DESCRIPTORS:
+        try:
+            os.mkdir(os.path.join(pipeline_path, key))
+        except FileExistsError:
+            pass
+        except OSError:
+            raise EnvironmentError(
+                "Directory '{}' could not be created. This problem could be due to insufficient disk space.".
+                format(key))
 
 
 def purge_executions():

@@ -10,7 +10,9 @@ from server.resources.models.execution import Execution
 from server.database import db
 from server.database.models.execution_process import ExecutionProcess
 from server.resources.helpers.path import get_user_data_directory
-from server.resources.helpers.executions import get_execution_dir, get_descriptor_path
+from server.resources.helpers.executions import (
+    get_execution_dir, get_descriptor_path, std_file_path, STDOUT_FILENAME,
+    STDERR_FILENAME)
 from server.resources.models.descriptor.descriptor_abstract import Descriptor
 
 
@@ -56,9 +58,12 @@ def execution_process(user: User, execution: Execution, descriptor: Descriptor,
     if not timeout:
         timeout = None
 
-    with open(os.path.join(
-            execution_dir, "stdout.txt"), 'w') as file_stdout, open(
-                os.path.join(execution_dir, "stderr.txt"), 'w') as file_stderr:
+    with open(
+            std_file_path(user.username, execution.identifier,
+                          STDOUT_FILENAME),
+            'w') as file_stdout, open(
+                std_file_path(user.username, execution.identifier,
+                              STDERR_FILENAME), 'w') as file_stderr:
         try:
             process = Popen(
                 descriptor.execute(user_data_dir, descriptor_path,

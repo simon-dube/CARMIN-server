@@ -49,5 +49,4 @@ class ExecutionKill(Resource):
         for execution_process in execution_processes:
             db.session.delete(execution_process)
         db.session.commit()
-
         pass

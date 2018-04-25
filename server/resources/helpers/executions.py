@@ -13,8 +13,8 @@ from server.resources.models.pipeline import Pipeline, PipelineSchema
 from server.common.error_codes_and_messages import (
     UNAUTHORIZED, INVALID_INPUT_FILE, INVALID_PATH, INVALID_MODEL_PROVIDED,
     INVALID_PIPELINE_IDENTIFIER, EXECUTION_IDENTIFIER_MUST_NOT_BE_SET,
-    INVALID_QUERY_PARAMETER, INVALID_EXECUTION_TIMEOUT, PATH_DOES_NOT_EXIST UNEXPECTED_ERROR,
-    ErrorCodeAndMessageFormatter)
+    INVALID_QUERY_PARAMETER, INVALID_EXECUTION_TIMEOUT, PATH_DOES_NOT_EXIST,
+    UNEXPECTED_ERROR, ErrorCodeAndMessageFormatter)
 from server.resources.models.execution import Execution
 from server.resources.helpers.pipelines import get_pipeline
 
@@ -144,9 +144,8 @@ def create_absolute_path_inputs(username: str, execution_identifier: str,
 
 def load_inputs(username: str,
                 execution_identifier: str) -> (Dict, ErrorCodeAndMessage):
-    execution_inputs_absolute_path = os.path.join(
-        get_user_data_directory(username), EXECUTIONS_DIRNAME,
-        execution_identifier, INPUTS_FILENAME)
+    execution_inputs_absolute_path = get_inputs_file_path(
+        username, execution_identifier)
 
     if not os.path.exists(execution_inputs_absolute_path):
         return None, INVALID_PATH
@@ -156,10 +155,10 @@ def load_inputs(username: str,
         return inputs, None
 
 
-def inputs_file_path(username: str, execution_identifier: str) -> str:
+def get_inputs_file_path(username: str, execution_identifier: str) -> str:
     return os.path.join(
         get_user_data_directory(username), EXECUTIONS_DIRNAME,
-        execution_identifier, INPUTS_FILENAME)
+        execution_identifier, CARMIN_FILES_FOLDER, INPUTS_FILENAME)
 
 
 def get_execution_as_model(username: str,
@@ -231,7 +230,6 @@ def filter_executions(executions, offset, limit):
     return executions, None
 
 
-
 def copy_descriptor_to_execution_dir(execution_path,
                                      descriptor_path) -> ErrorCodeAndMessage:
     if not os.path.exists(descriptor_path):
@@ -251,11 +249,12 @@ def get_descriptor_path(username: str, execution_identifier: str) -> str:
         get_execution_carmin_files_dir(username, execution_identifier),
         DESCRIPTOR_FILENAME)
 
+
 def std_file_path(username: str, execution_identifier: str,
                   filename: str) -> str:
     return os.path.join(
         get_user_data_directory(username), EXECUTIONS_DIRNAME,
-        execution_identifier, filename)
+        execution_identifier, CARMIN_FILES_FOLDER, filename)
 
 
 def get_std_file(username: str, execution_identifier: str,
@@ -267,6 +266,7 @@ def get_std_file(username: str, execution_identifier: str,
             return f.read(), None
     except OSError:
         return None, PATH_DOES_NOT_EXIST
+
 
 from .path import (create_directory, get_user_data_directory, is_safe_path,
                    is_data_accessible, platform_path_exists,

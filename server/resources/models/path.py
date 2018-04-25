@@ -99,7 +99,8 @@ class Path():
             last_modification_date=os.path.getmtime(absolute_path_to_resource),
             is_directory=os.path.isdir(absolute_path_to_resource),
             size=Path.get_path_size(absolute_path_to_resource, is_directory),
-            mime_type=mime_type)
+            mime_type=mime_type,
+            execution_id=execution_id)
 
     @classmethod
     def get_path_size(cls, absolute_path: str, is_dir: bool) -> int:

@@ -17,14 +17,9 @@ from server.common.error_codes_and_messages import (
     UNEXPECTED_ERROR, ErrorCodeAndMessageFormatter)
 from server.resources.models.execution import Execution
 from server.resources.helpers.pipelines import get_pipeline
-
-INPUTS_FILENAME = "inputs.json"
-EXECUTIONS_DIRNAME = "executions"
-DESCRIPTOR_FILENAME = "descriptor.json"
-CARMIN_FILES_FOLDER = ".carmin-files"
-
-STDOUT_FILENAME = "stdout.txt"
-STDERR_FILENAME = "stderr.txt"
+from server.resources.helpers.pathnames import (
+    INPUTS_FILENAME, EXECUTIONS_DIRNAME, DESCRIPTOR_FILENAME,
+    CARMIN_FILES_FOLDER, STDOUT_FILENAME, STDERR_FILENAME)
 
 
 def create_user_executions_dir(username: str):

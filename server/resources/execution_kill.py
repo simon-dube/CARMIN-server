@@ -45,9 +45,9 @@ class ExecutionKill(Resource):
             actual_execution_processes)
 
         # Mark the execution as "Killed" and delete the execution processes
+        execution_db.status = ExecutionStatus.Killed
         for execution_process in execution_processes:
             db.session.delete(execution_process)
-        execution_db.status = ExecutionStatus.Killed
         db.session.commit()
 
         pass

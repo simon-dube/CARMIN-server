@@ -13,9 +13,13 @@ from .resources.models.platform_properties import PlatformPropertiesSchema
 from server import app
 from server.database import db
 from .database.models.user import User, Role
+from .database.models.execution import Execution, ExecutionStatus
+from .database.models.execution_process import ExecutionProcess
 from server.resources.helpers.pipelines import export_all_pipelines
 from server.common.error_codes_and_messages import PATH_EXISTS
 from server.platform_properties import PLATFORM_PROPERTIES
+from server.resources.helpers.execution_kill import (get_process_alive_count,
+                                                     kill_execution_processes)
 
 
 def start_up():
@@ -23,6 +27,7 @@ def start_up():
     export_pipelines()
     properties_validation()
     find_or_create_admin()
+    purge_executions()
 
 
 def properties_validation(config_data: Dict = None) -> bool:
@@ -112,6 +117,53 @@ def export_pipelines():
 
     if not success:
         raise EnvironmentError(error)
+
+
+def purge_executions():
+    # Let's get all executions running
+    executions = db.session.query(Execution).filter_by(
+        status=ExecutionStatus.Running)
+
+    for e in executions:
+        # Look at if it has some processes linked to it
+        execution_processes = get_execution_processes(e.identifier, db.session)
+
+        if not execution_processes:  # Most probably due to the execution being in termination process
+            continue
+
+        actual_execution_processes = [
+            e for e in execution_processes if e.is_execution
+        ]
+        execution_parent_processes = [
+            e for e in execution_processes if not e.is_execution
+        ]
+
+        process_still_alive_count = 0
+        process_still_alive_count += get_process_alive_count(
+            actual_execution_processes)
+        process_still_alive_count += get_process_alive_count(
+            execution_parent_processes)
+
+        # The execution is going as expected
+        if process_still_alive_count == len(execution_processes):
+            continue
+
+        # The execution is supposed to be still running but some of the processes it launched are no more active
+        # We will mark the execution as "ExecutionFailed" and kill the remaining processes
+        kill_execution_processes(execution_parent_processes)
+        kill_execution_processes(actual_execution_processes)
+
+        e.status = ExecutionStatus.ExecutionFailed
+        for execution_process in execution_processes:
+            db.session.delete(execution_process)
+        db.session.commit()
+
+    # Now that the executions marked as 'Running' have been purged, let's clean up the remaining execution processes
+    remaining_processes = db.session.query(ExecutionProcess)
+    for process in remaining_processes:
+        kill_execution_processes([process])
+        db.session.delete(process)
+        db.session.commit()
 
 
 from server.resources.helpers.register import register_user

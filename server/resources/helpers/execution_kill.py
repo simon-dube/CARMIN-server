@@ -22,3 +22,20 @@ def kill_execution_processes(processes: List[ExecutionStatus]):
             pass
 
     return all_gone, all_alive
+
+
+def get_process_alive_count(process: List[ExecutionStatus],
+                            count_children: bool = False):
+    count = 0
+    for process_entry in processes:
+        try:
+            process = Process(process_entry.pid)
+            count += 1
+            if count_children:
+                children = process.children(recursive=True)
+                count += len(children)
+        except NoSuchProcess:
+            # The process was already killed. Let's continue
+            pass
+
+    return count

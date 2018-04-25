@@ -13,7 +13,7 @@ from server.resources.models.pipeline import Pipeline, PipelineSchema
 from server.common.error_codes_and_messages import (
     UNAUTHORIZED, INVALID_INPUT_FILE, INVALID_PATH, INVALID_MODEL_PROVIDED,
     INVALID_PIPELINE_IDENTIFIER, EXECUTION_IDENTIFIER_MUST_NOT_BE_SET,
-    INVALID_QUERY_PARAMETER, INVALID_EXECUTION_TIMEOUT, UNEXPECTED_ERROR,
+    INVALID_QUERY_PARAMETER, INVALID_EXECUTION_TIMEOUT, PATH_DOES_NOT_EXIST UNEXPECTED_ERROR,
     ErrorCodeAndMessageFormatter)
 from server.resources.models.execution import Execution
 from server.resources.helpers.pipelines import get_pipeline
@@ -22,6 +22,9 @@ INPUTS_FILENAME = "inputs.json"
 EXECUTIONS_DIRNAME = "executions"
 DESCRIPTOR_FILENAME = "descriptor.json"
 CARMIN_FILES_FOLDER = "carmin-files"
+
+STDOUT_FILENAME = "stdout.txt"
+STDERR_FILENAME = "stderr.txt"
 
 
 def create_user_executions_dir(username: str):
@@ -228,6 +231,7 @@ def filter_executions(executions, offset, limit):
     return executions, None
 
 
+
 def copy_descriptor_to_execution_dir(execution_path,
                                      descriptor_path) -> ErrorCodeAndMessage:
     if not os.path.exists(descriptor_path):
@@ -247,6 +251,22 @@ def get_descriptor_path(username: str, execution_identifier: str) -> str:
         get_execution_carmin_files_dir(username, execution_identifier),
         DESCRIPTOR_FILENAME)
 
+def std_file_path(username: str, execution_identifier: str,
+                  filename: str) -> str:
+    return os.path.join(
+        get_user_data_directory(username), EXECUTIONS_DIRNAME,
+        execution_identifier, filename)
+
+
+def get_std_file(username: str, execution_identifier: str,
+                 filename: str) -> (str, ErrorCodeAndMessage):
+    file_path = std_file_path(username, execution_identifier, filename)
+
+    try:
+        with open(file_path) as f:
+            return f.read(), None
+    except OSError:
+        return None, PATH_DOES_NOT_EXIST
 
 from .path import (create_directory, get_user_data_directory, is_safe_path,
                    is_data_accessible, platform_path_exists,

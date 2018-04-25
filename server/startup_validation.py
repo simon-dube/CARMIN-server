@@ -15,6 +15,7 @@ from server.database import db
 from .database.models.user import User, Role
 from .database.models.execution import Execution, ExecutionStatus
 from .database.models.execution_process import ExecutionProcess
+from .database.queries.executions import get_execution_processes
 from server.resources.helpers.pipelines import export_all_pipelines
 from server.common.error_codes_and_messages import PATH_EXISTS
 from server.platform_properties import PLATFORM_PROPERTIES

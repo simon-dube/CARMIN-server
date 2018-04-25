@@ -21,6 +21,7 @@ from server.resources.helpers.pipelines import get_pipeline
 INPUTS_FILENAME = "inputs.json"
 EXECUTIONS_DIRNAME = "executions"
 DESCRIPTOR_FILENAME = "descriptor.json"
+CARMIN_FILES_FOLDER = "carmin-files"
 
 
 def create_user_executions_dir(username: str):
@@ -33,19 +34,23 @@ def create_user_executions_dir(username: str):
     return user_execution_dir
 
 
-def create_execution_directory(execution: ExecutionDB,
-                               user: User) -> (str, ErrorCodeAndMessage):
+def create_execution_directory(execution: ExecutionDB, user: User
+                               ) -> ((str, str), ErrorCodeAndMessage):
 
     user_execution_dir = create_user_executions_dir(user.username)
     execution_dir_absolute_path = os.path.join(user_execution_dir,
                                                execution.identifier)
+    carmin_dir_absolute_path = os.path.join(execution_dir_absolute_path,
+                                            CARMIN_FILES_FOLDER)
 
     if not is_safe_path(execution_dir_absolute_path) or not is_data_accessible(
             execution_dir_absolute_path, user):
-        return None, UNAUTHORIZED
+        return (None, None), UNAUTHORIZED
 
     path, error = create_directory(execution_dir_absolute_path)
-    return execution_dir_absolute_path, error
+    carmin_path, error = create_directory(carmin_dir_absolute_path)
+
+    return (execution_dir_absolute_path, carmin_dir_absolute_path), error
 
 
 def delete_execution_directory(execution_dir_path: str):
@@ -61,6 +66,15 @@ def get_execution_dir(username: str, execution_identifier: str) -> str:
     return execution_dir
 
 
+def get_execution_carmin_files_dir(username: str,
+                                   execution_identifier: str) -> str:
+    execution_carmin_files_dir = os.path.join(
+        get_execution_dir(username, execution_identifier), CARMIN_FILES_FOLDER)
+    if not os.path.isdir(execution_carmin_files_dir):
+        raise FileNotFoundError
+    return execution_carmin_files_dir
+
+
 def write_inputs_to_file(execution: Execution,
                          path_to_execution_dir: str) -> ErrorCodeAndMessage:
     inputs_json_file = os.path.join(path_to_execution_dir, INPUTS_FILENAME)
@@ -73,8 +87,8 @@ def write_inputs_to_file(execution: Execution,
 
 
 def write_absolute_path_inputs_to_file(
-        execution_identifier: str, input_values: Dict,
-        path_to_execution_dir: str) -> (str, ErrorCodeAndMessage):
+        execution_identifier: str,
+        input_values: Dict) -> (str, ErrorCodeAndMessage):
     inputs_json_file = os.path.join(tempfile.gettempdir(),
                                     "{}.json".format(execution_identifier))
     write_content = json.dumps(input_values)
@@ -118,9 +132,8 @@ def create_absolute_path_inputs(username: str, execution_identifier: str,
                 input_values[key] = path_from_data_dir(url_root,
                                                        input_values[key])
 
-    execution_dir = get_execution_dir(username, execution_identifier)
-    path, error = write_absolute_path_inputs_to_file(
-        execution_identifier, input_values, execution_dir)
+    path, error = write_absolute_path_inputs_to_file(execution_identifier,
+                                                     input_values)
     if error:
         return None, error
     return path, None
@@ -229,8 +242,10 @@ def copy_descriptor_to_execution_dir(execution_path,
     return None
 
 
-def get_descriptor_path(execution_path: str) -> str:
-    return os.path.join(execution_path, DESCRIPTOR_FILENAME)
+def get_descriptor_path(username: str, execution_identifier: str) -> str:
+    return os.path.join(
+        get_execution_carmin_files_dir(username, execution_identifier),
+        DESCRIPTOR_FILENAME)
 
 
 from .path import (create_directory, get_user_data_directory, is_safe_path,

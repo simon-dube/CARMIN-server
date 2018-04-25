@@ -1,5 +1,4 @@
 from flask_restful import Resource, request
-from boutiques import bosh
 from jsonschema import ValidationError
 from server.database import db
 from server.database.queries.executions import get_execution
@@ -10,8 +9,7 @@ from server.common.error_codes_and_messages import (
     EXECUTION_NOT_FOUND, UNAUTHORIZED, UNEXPECTED_ERROR, INVALID_INVOCATION,
     CANNOT_REPLAY_EXECUTION)
 from server.resources.helpers.executions import (
-    get_execution_as_model, get_execution_dir, create_absolute_path_inputs,
-    get_descriptor_path)
+    get_execution_as_model, create_absolute_path_inputs, get_descriptor_path)
 from server.resources.helpers.execution import start_execution
 from server.resources.models.descriptor.descriptor_abstract import Descriptor
 
@@ -36,8 +34,8 @@ class ExecutionPlay(Resource):
             return UNEXPECTED_ERROR
 
         # Get the descriptor path
-        execution_dir = get_execution_dir(user.username, execution.identifier)
-        descriptor_path = get_descriptor_path(execution_dir)
+        descriptor_path = get_descriptor_path(user.username,
+                                              execution.identifier)
 
         # Get appriopriate descriptor object
         descriptor = Descriptor.descriptor_factory_from_type(

@@ -65,21 +65,22 @@ class Executions(Resource):
             db.session.commit()
 
             # Execution directory creation
-            execution_path, error = create_execution_directory(
-                new_execution, user)
+            (execution_path,
+             carmin_files_path), error = create_execution_directory(
+                 new_execution, user)
             if error:
                 db.session.rollback()
                 return error
 
             # Writing inputs to inputs file in execution directory
-            error = write_inputs_to_file(model, execution_path)
+            error = write_inputs_to_file(model, carmin_files_path)
             if error:
                 delete_execution_directory(execution_path)
                 db.session.rollback()
                 return error
 
             # Copying pipeline descriptor to execution folder
-            error = copy_descriptor_to_execution_dir(execution_path,
+            error = copy_descriptor_to_execution_dir(carmin_files_path,
                                                      descriptor_path)
             if error:
                 delete_execution_directory(execution_path)

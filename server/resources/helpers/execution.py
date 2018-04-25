@@ -49,7 +49,7 @@ def execution_process(user: User, execution: Execution, descriptor: Descriptor,
     # 3 Launch the bosh execution
     user_data_dir = get_user_data_directory(user.username)
     execution_dir = get_execution_dir(user.username, execution.identifier)
-    descriptor_path = get_descriptor_path(execution_dir)
+    descriptor_path = get_descriptor_path(user.username, execution.identifier)
     timeout = execution.timeout
     if timeout is None:
         timeout = PLATFORM_PROPERTIES.get("defaultExecutionTimeout")

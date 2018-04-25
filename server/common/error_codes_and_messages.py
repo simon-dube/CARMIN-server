@@ -88,3 +88,7 @@ CANNOT_KILL_FINISHING_EXECUTION = ErrorCodeAndMessage(
     150,
     "The execution processes are not running, thus the execution is most probably finishing and cannot be killed."
 )
+CANNOT_GET_RESULT_NOT_COMPLETED_EXECUTION = ErrorCodeAndMessage(
+    155,
+    "The execution is not done yet, thus results cannot be queried. Please try again later."
+)

@@ -24,10 +24,10 @@ def kill_execution_processes(processes: List[ExecutionProcess]):
             children = process.children(recursive=True)
             children.append(process)
             for p in children:
-                p.terminate()
+                call(['kill', '-s', 'TERM', str(p.pid)])
             _, alive = wait_procs(children, timeout=2)
             for p in alive:
-                p.kill()
+                call(['kill', '-s', 'QUIT', str(p.pid)])
         except NoSuchProcess:
             # The process was already killed. Let's continue
             pass

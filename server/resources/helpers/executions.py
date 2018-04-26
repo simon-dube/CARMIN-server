@@ -85,9 +85,11 @@ def write_inputs_to_file(execution: Execution,
 
 
 def write_absolute_path_inputs_to_file(
-        execution_identifier: str,
+        username: str, execution_identifier: str,
         input_values: Dict) -> (str, ErrorCodeAndMessage):
-    inputs_json_file = os.path.join(tempfile.gettempdir(),
+    carmin_files_dir = get_execution_carmin_files_dir(username,
+                                                      execution_identifier)
+    inputs_json_file = os.path.join(carmin_files_dir,
                                     "{}.json".format(execution_identifier))
     write_content = json.dumps(input_values)
     try:
@@ -130,8 +132,8 @@ def create_absolute_path_inputs(username: str, execution_identifier: str,
                 input_values[key] = path_from_data_dir(url_root,
                                                        input_values[key])
 
-    path, error = write_absolute_path_inputs_to_file(execution_identifier,
-                                                     input_values)
+    path, error = write_absolute_path_inputs_to_file(
+        username, execution_identifier, input_values)
     if error:
         return None, error
     return path, None

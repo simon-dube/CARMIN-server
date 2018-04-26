@@ -108,5 +108,4 @@ def execution_process(user: User, execution: Execution, descriptor: Descriptor,
 
 def ExecutionFailed(execution_db):
     execution_db.status = ExecutionStatus.ExecutionFailed
-    db.session.delete(execution_process)
     db.session.commit()

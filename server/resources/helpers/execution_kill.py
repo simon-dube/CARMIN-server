@@ -24,7 +24,7 @@ def kill_execution_processes(processes: List[ExecutionStatus]):
     return all_gone, all_alive
 
 
-def get_process_alive_count(process: List[ExecutionStatus],
+def get_process_alive_count(processes: List[ExecutionStatus],
                             count_children: bool = False):
     count = 0
     for process_entry in processes:

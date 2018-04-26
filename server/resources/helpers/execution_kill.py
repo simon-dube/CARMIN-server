@@ -1,10 +1,24 @@
 import signal
 from typing import List
 from psutil import Process, wait_procs, NoSuchProcess
-from server.database.models.execution import ExecutionStatus
+from server.database.models.execution_process import ExecutionProcess
 
 
-def kill_execution_processes(processes: List[ExecutionStatus]):
+def kill_all_execution_processes(execution_processes: List[ExecutionProcess]):
+    actual_execution_processes = [
+        e for e in execution_processes if e.is_execution
+    ]
+    execution_parent_processes = [
+        e for e in execution_processes if not e.is_execution
+    ]
+
+    gone_parent, alive_parent = kill_execution_processes(
+        execution_parent_processes)
+    gone_process, alive_process = kill_execution_processes(
+        actual_execution_processes)
+
+
+def kill_execution_processes(processes: List[ExecutionProcess]):
     all_gone = list()
     all_alive = list()
     for process_entry in processes:
@@ -24,7 +38,7 @@ def kill_execution_processes(processes: List[ExecutionStatus]):
     return all_gone, all_alive
 
 
-def get_process_alive_count(processes: List[ExecutionStatus],
+def get_process_alive_count(processes: List[ExecutionProcess],
                             count_children: bool = False):
     count = 0
     for process_entry in processes:

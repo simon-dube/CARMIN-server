@@ -60,4 +60,3 @@ class ExecutionPlay(Resource):
 
         # The execution is valid and we are now ready to start it
         start_execution(user, execution, descriptor, modified_inputs_path)
-        pass

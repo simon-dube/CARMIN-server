@@ -4,7 +4,7 @@ from server.database.models.execution import ExecutionStatus, current_milli_time
 from server.database.queries.executions import get_execution, get_execution_processes
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, EXECUTION_NOT_FOUND, CANNOT_MODIFY_PARAMETER,
-    CANNOT_KILL_FINISHING_EXECUTION)
+    UNAUTHORIZED, CANNOT_KILL_FINISHING_EXECUTION)
 from server.resources.models.execution import ExecutionSchema, EXECUTION_COMPLETED_STATUSES
 from server.resources.helpers.executions import (
     get_execution_as_model, get_execution_dir, delete_execution_directory)
@@ -79,7 +79,7 @@ class Execution(Resource):
             execution_db.end_date = current_milli_time()
         db.session.commit()
 
-        # Free all ressources associated with the execution if delete files is True
+        # Free all resources associated with the execution if delete files is True
         if deleteFiles:
             execution_dir = get_execution_dir(user.username,
                                               execution_identifier)

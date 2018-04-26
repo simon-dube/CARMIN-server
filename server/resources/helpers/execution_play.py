@@ -13,13 +13,14 @@ from server.resources.helpers.path import get_user_data_directory
 from server.resources.helpers.executions import (
     get_execution_dir, get_descriptor_path, std_file_path, STDOUT_FILENAME,
     STDERR_FILENAME)
+from server.resources.helpers.execution_kill import kill_execution_processes
 from server.resources.models.descriptor.descriptor_abstract import Descriptor
 
 
 def start_execution(user: User, execution: Execution, descriptor: Descriptor,
                     inputs_path: str):
     # Launch the execution process
-    pool = Pool()
+    pool = Pool(processes=1)
     pool.apply_async(
         func=execution_process,
         kwds={
@@ -82,14 +83,14 @@ def execution_process(user: User, execution: Execution, descriptor: Descriptor,
 
             process.wait(timeout=timeout)
         except TimeoutExpired as timeout_expired:  # Timeout
-            process.kill()
+            kill_execution_processes([execution_process_popen])
             file_stderr.writelines(
                 "Execution timed out after {} seconds".format(
                     timeout_expired.timeout))
             ExecutionFailed(execution_db)
         except Exception:  # Any other execution issue
             ExecutionFailed(execution_db)
-            process.kill()
+            kill_execution_processes([execution_process_popen])
         else:
             # 4 Execution successfully completed - Writing to database
             execution_db.status = ExecutionStatus.Finished

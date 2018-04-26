@@ -6,8 +6,8 @@ from server.resources.decorators import login_required, marshal_response
 from server.database.models.execution import Execution, ExecutionStatus
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, ErrorCodeAndMessageAdditionalDetails,
-    EXECUTION_NOT_FOUND, UNAUTHORIZED, UNEXPECTED_ERROR, INVALID_INVOCATION,
-    CANNOT_REPLAY_EXECUTION)
+    EXECUTION_NOT_FOUND, UNAUTHORIZED, CORRUPTED_EXECUTION, UNEXPECTED_ERROR,
+    INVALID_INVOCATION, CANNOT_REPLAY_EXECUTION)
 from server.resources.helpers.executions import (
     get_execution_as_model, create_absolute_path_inputs, get_descriptor_path)
 from server.resources.helpers.execution_play import start_execution
@@ -31,7 +31,7 @@ class ExecutionPlay(Resource):
 
         execution, error = get_execution_as_model(user.username, execution_db)
         if error:
-            return UNEXPECTED_ERROR
+            return CORRUPTED_EXECUTION
 
         # Get the descriptor path
         descriptor_path = get_descriptor_path(user.username,

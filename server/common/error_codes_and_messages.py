@@ -92,3 +92,7 @@ CANNOT_GET_RESULT_NOT_COMPLETED_EXECUTION = ErrorCodeAndMessage(
     155,
     "The execution is not done yet, thus results cannot be queried. Please try again later."
 )
+CORRUPTED_EXECUTION = ErrorCodeAndMessage(
+    160,
+    "There is an unrecoverable problem with this execution. Please create a new execution."
+)

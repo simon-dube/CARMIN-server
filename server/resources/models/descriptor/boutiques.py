@@ -32,8 +32,9 @@ class Boutiques(Descriptor):
         return True, None
 
     @classmethod
-    def execute(cls, user_data_dir, descriptor, input_data):
-        return [
-            "bosh", "exec", "launch", "-v{0}:{0}".format(user_data_dir),
-            descriptor, input_data
-        ]
+    def execute(cls, user_data_dir, descriptor, input_data, workdir, stdout,
+                stderr):
+        import time
+        stdout.write("Before timeout")
+        time.sleep(300)
+        stdout.write("After timeout")

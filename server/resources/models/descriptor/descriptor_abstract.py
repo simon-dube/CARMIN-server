@@ -15,7 +15,8 @@ class Descriptor(ABC):
 
     @classmethod
     @abstractmethod
-    def execute(cls, user_data_dir, descriptor, input_data):
+    def execute(cls, user_data_dir, descriptor, input_data, workdir, stdout,
+                stderr):
         pass
 
     @classmethod

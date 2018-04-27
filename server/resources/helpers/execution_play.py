@@ -1,7 +1,7 @@
 import sys
 import os
-from subprocess import Popen, TimeoutExpired
-from multiprocessing import Pool, current_process
+# from subprocess import Popen, TimeoutExpired
+from multiprocessing import Pool, current_process, Process
 from server.platform_properties import PLATFORM_PROPERTIES
 from server.database.models.user import User
 from server.database.models.execution import ExecutionStatus, current_milli_time
@@ -66,13 +66,24 @@ def execution_process(user: User, execution: Execution, descriptor: Descriptor,
                 std_file_path(user.username, execution.identifier,
                               STDERR_FILENAME), 'w') as file_stderr:
         try:
-            process = Popen(
-                descriptor.execute(user_data_dir, descriptor_path,
-                                   inputs_path),
-                stdout=file_stdout,
-                stderr=file_stderr,
-                cwd=execution_dir)
+            process = Process(
+                target=descriptor.execute,
+                kwargs={
+                    "user_data_dir": user_data_dir,
+                    "descriptor": descriptor_path,
+                    "input_data": inputs_path,
+                    "workdir": execution_dir,
+                    "stdout": file_stdout,
+                    "stderr": file_stderr
+                })
+            process.start()
+            # process = Popen(
+            #     (user_data_dir, descriptor_path, inputs_path),
+            #     stdout=file_stdout,
+            #     stderr=file_stderr,
+            #     cwd=execution_dir)
 
+            print(process.pid, flush=True)
             # Insert Popen process in DB
             execution_process_popen = ExecutionProcess(
                 execution_identifier=execution.identifier,
@@ -81,24 +92,28 @@ def execution_process(user: User, execution: Execution, descriptor: Descriptor,
             db.session.add(execution_process_popen)
             db.session.commit()
 
-            process.wait(timeout=timeout)
-        except TimeoutExpired as timeout_expired:  # Timeout
-            kill_execution_processes([execution_process_popen])
+            process.join(timeout=timeout)
+        except TimeoutError as timeout_error:  # Timeout
+            if execution_process_popen:
+                kill_execution_processes([execution_process_popen])
             file_stderr.writelines(
-                "Execution timed out after {} seconds".format(
-                    timeout_expired.timeout))
+                "Execution timed out after {} seconds".format(timeout))
             ExecutionFailed(execution_db)
         except Exception:  # Any other execution issue
             ExecutionFailed(execution_db)
-            kill_execution_processes([execution_process_popen])
+            if execution_process_popen:
+                kill_execution_processes([execution_process_popen])
         else:
-            # 4 Execution successfully completed - Writing to database
-            execution_db.status = ExecutionStatus.Finished
+            # 4 Execution completed - Writing to database
+            print(returncode, flush=True)
+            print(process.returncode, flush=True)
+            execution_db.status = ExecutionStatus.Finished if returncode == 0 else ExecutionStatus.ExecutionFailed
             db.session.commit()
         finally:
             # Delete Execution processes from the database
             db.session.delete(execution_process)
-            db.session.delete(execution_process_popen)
+            if execution_process_popen:
+                db.session.delete(execution_process_popen)
             # Insert endtime
             execution_db.end_date = current_milli_time()
             db.session.commit()

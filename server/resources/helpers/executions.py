@@ -183,7 +183,7 @@ def get_execution_as_model(username: str,
         (0.3) API specification. It simply returns a list of output files that
         were generated from the execution."""
         from server.resources.helpers.execution_results import get_output_files
-        output_files = get_output_files(username, exe.identifier)
+        output_files, error = get_output_files(username, exe.identifier)
         path_list = []
         for output in output_files:
             path_list.append(output.platform_path)

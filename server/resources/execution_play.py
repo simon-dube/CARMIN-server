@@ -1,4 +1,5 @@
 import os
+import logging
 from flask_restful import Resource, request
 from jsonschema import ValidationError
 from server.database import db

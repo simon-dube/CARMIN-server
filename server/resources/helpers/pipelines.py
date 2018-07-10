@@ -91,9 +91,9 @@ def export_all_pipelines() -> (bool, str):
         all_pipelines = get_all_pipelines(descriptor_type)
 
         for pipeline in all_pipelines:
-            carmin_pipeline = os.path.join(app.config['PIPELINE_DIRECTORY'],
-                                           "{}_{}".format(
-                                               descriptor_type, pipeline.name))
+            carmin_pipeline = os.path.join(
+                app.config['PIPELINE_DIRECTORY'], "{}_{}".format(
+                    descriptor_type, pipeline.name))
 
             descriptor = Descriptor.descriptor_factory_from_type(
                 descriptor_type)

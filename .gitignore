@@ -4,3 +4,5 @@
 *.db
 /carmin-server/.coverage
 /CONFIG.json
+
+\.vscode/

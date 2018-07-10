@@ -101,4 +101,8 @@ CORRUPTED_EXECUTION = ErrorCodeAndMessage(
 )
 UNSUPPORTED_DESCRIPTOR_TYPE = ErrorCodeAndMessage(
     165, "The descriptor type '{}' is not supported.")
+DATA_DATASET_SIBLING_UNSPECIFIED = ErrorCodeAndMessage(
+    170, "The data dataset has no sibling specified.")
+DATA_DATASET_SIBLING_CANT_UPDATE = ErrorCodeAndMessage(
+    170, "The data dataset was not able to update from sibling '{}'.")
 PAGE_NOT_FOUND = ErrorCodeAndMessage(404, "Page Not Found")

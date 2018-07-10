@@ -15,7 +15,7 @@ DEPS = [
     "psycopg2-binary>=2.7.4,<3.0", "marshmallow>=2.15.0,<3.0",
     "marshmallow_enum>=1.4.1,<2.0", "boutiques>=0.5.6,<1.0",
     "blinker>=1.4,<2.0", "docopt>=0.6.2,<1.0", "typing>=3.6.4,<4.0",
-    "scandir>=1.7,<2.0", "psutil>=5.4.5,<6.0"
+    "scandir>=1.7,<2.0", "psutil>=5.4.5,<6.0", "datalad>=0.10.1,<1.0"
 ]
 
 setup(

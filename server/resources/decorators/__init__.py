@@ -1,13 +1,17 @@
+import logging
 from functools import wraps
 from flask_restful import request
 from flask import abort, g
+from datalad.support.exceptions import IncompleteResultsError
+from server import app
 from server.database import db
 from server.resources.models.error_code_and_message import ErrorCodeAndMessage
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageMarshaller, ErrorCodeAndMessageAdditionalDetails,
     ErrorCodeAndMessageFormatter, INVALID_MODEL_PROVIDED, MODEL_DUMPING_ERROR,
-    MISSING_API_KEY, INVALID_API_KEY, UNAUTHORIZED, UNEXPECTED_ERROR)
+    MISSING_API_KEY, INVALID_API_KEY, UNAUTHORIZED, UNEXPECTED_ERROR, DATA_DATASET_SIBLING_UNSPECIFIED, DATA_DATASET_SIBLING_CANT_UPDATE)
 from server.database.models.user import User, Role
+from server.common.datalad import get_data_dataset
 
 
 def unmarshal_request(schema, allow_none: bool = False, partial=False):
@@ -105,5 +109,34 @@ def admin_only(func):
             return ErrorCodeAndMessageMarshaller(UNAUTHORIZED), 401
 
         return func(user=user, *args, **kwargs)
+
+    return wrapper
+
+
+def datalad_update(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        dataset = get_data_dataset()
+        if not dataset:
+            return func(*args, **kwargs)
+
+        # Using Datalad
+        # Update Dataset from sibling
+        sibling = app.config.get(
+            "DATA_REMOTE_SIBLING")
+        if not sibling:
+            return ErrorCodeAndMessageMarshaller(DATA_DATASET_SIBLING_UNSPECIFIED), 500
+
+        try:
+            dataset.update(path=".", sibling=sibling,
+                           merge=True, on_failure="stop")
+        except IncompleteResultsError as ire:
+            logger = logging.getLogger('server-error')
+            logger.error(ErrorCodeAndMessageFormatter(
+                DATA_DATASET_SIBLING_CANT_UPDATE, sibling).error_message)
+            logger.exception(ire)
+            return ErrorCodeAndMessageMarshaller(UNEXPECTED_ERROR)
+
+        return func(*args, **kwargs)
 
     return wrapper

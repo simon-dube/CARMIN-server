@@ -151,7 +151,7 @@ def load_inputs(username: str,
     execution_inputs_absolute_path = get_inputs_file_path(
         username, execution_identifier)
 
-    if not os.path.exists(execution_inputs_absolute_path):
+    if not path_exists(execution_inputs_absolute_path):
         return None, INVALID_PATH
 
     with open(execution_inputs_absolute_path) as inputs_file:
@@ -229,7 +229,7 @@ def query_converter(value):
 
 def copy_descriptor_to_execution_dir(execution_path,
                                      descriptor_path) -> ErrorCodeAndMessage:
-    if not os.path.exists(descriptor_path):
+    if not path_exists(descriptor_path):
         return PATH_DOES_NOT_EXIST
 
     try:
@@ -273,4 +273,4 @@ def is_safe_for_get(user: User, execution_db: ExecutionDB):
 
 from .path import (create_directory, get_user_data_directory, is_safe_path,
                    is_data_accessible, platform_path_exists,
-                   path_from_data_dir)
+                   path_from_data_dir, path_exists)

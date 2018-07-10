@@ -13,6 +13,7 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DATA_DIRECTORY = os.environ.get('DATA_DIRECTORY')
     PIPELINE_DIRECTORY = os.environ.get('PIPELINE_DIRECTORY')
+    DATA_REMOTE_SIBLING = os.environ.get('DATA_REMOTE_SIBLING')
 
 
 class ProductionConfig(Config):

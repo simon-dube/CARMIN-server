@@ -5,10 +5,12 @@ import zipfile
 import mimetypes
 import hashlib
 import base64
+import datalad
 from typing import List
 from binascii import Error
 from flask import Response, make_response, send_file
 from server import app
+from server.common.datalad import get_data_dataset
 from server.resources.models.upload_data import UploadData
 from server.resources.models.error_code_and_message import ErrorCodeAndMessage
 from server.database.models.user import User, Role
@@ -173,7 +175,7 @@ def make_tarball(data_path: str) -> tarfile:
 def parent_dir_exists(requested_data_path: str) -> bool:
     parent_directory = os.path.abspath(
         os.path.join(requested_data_path, os.pardir))
-    return os.path.exists(parent_directory)
+    return path_exists(parent_directory)
 
 
 def platform_path_exists(url_root: str, platform_path: str) -> (bool, str):
@@ -181,13 +183,13 @@ def platform_path_exists(url_root: str, platform_path: str) -> (bool, str):
 
     if isinstance(platform_path, list):
         for path in platform_path:
-            exists = os.path.exists(
+            exists = path_exists(
                 os.path.join(app.config['DATA_DIRECTORY'],
                              path[len(path_url):]))
             if not exists:
                 return False, path
         return True, None
-    return os.path.exists(
+    return path_exists(
         os.path.join(app.config['DATA_DIRECTORY'],
                      platform_path[len(path_url):])), platform_path
 
@@ -196,6 +198,18 @@ def path_from_data_dir(url_root: str, platform_path: str) -> str:
     path_url = '{}path/'.format(url_root)
     return os.path.join(app.config['DATA_DIRECTORY'],
                         platform_path[len(path_url):])
+
+
+def path_exists(complete_path: str) -> bool:
+    return os.path.exists(complete_path)
+
+    # We are using a dataset
+    dataset, error = get_data_dataset()
+
+    # If the dataset was not setup properly at this point,
+    #  we will manage it as a normal folder
+    if error:
+        return os.path.exists(complete_path)
 
 
 from .executions import EXECUTIONS_DIRNAME

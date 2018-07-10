@@ -17,7 +17,7 @@ from .decorators import login_required, unmarshal_request
 from .helpers.path import (is_safe_for_delete, upload_file, upload_archive,
                            create_directory, generate_md5, is_safe_for_put,
                            is_safe_for_get, make_absolute, get_content,
-                           get_path_list)
+                           get_path_list, path_exists)
 
 
 class Path(Resource):
@@ -41,7 +41,7 @@ class Path(Resource):
         if not is_safe_for_get(requested_data_path, user):
             return marshal(INVALID_PATH), 401
 
-        if not os.path.exists(requested_data_path) and action != 'exists':
+        if not path_exists(requested_data_path) and action != 'exists':
             return marshal(PATH_DOES_NOT_EXIST), 401
 
         if not action:
@@ -53,8 +53,8 @@ class Path(Resource):
             path = PathModel.object_from_pathname(requested_data_path)
             return marshal(path)
         elif action == 'exists':
-            path_exists = os.path.exists(requested_data_path)
-            return marshal(BooleanResponse(path_exists))
+            exists = path_exists(requested_data_path)
+            return marshal(BooleanResponse(exists))
         elif action == 'list':
             if not os.path.isdir(requested_data_path):
                 return marshal(LIST_ACTION_ON_FILE), 400

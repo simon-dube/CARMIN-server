@@ -55,7 +55,8 @@ def is_safe_path(path: str, follow_symlinks: bool = True) -> bool:
     directory.
     """
     base_dir = app.config['DATA_DIRECTORY']
-    if follow_symlinks:
+
+    if follow_symlinks and not get_data_dataset():
         return os.path.realpath(path).startswith(base_dir)
     return os.path.abspath(path).startwith(base_dir)
 
@@ -63,8 +64,13 @@ def is_safe_path(path: str, follow_symlinks: bool = True) -> bool:
 def is_data_accessible(path: str, user: User) -> bool:
     if user.role == Role.admin:
         return True
-    return os.path.realpath(path).startswith(
-        get_user_data_directory(user.username))
+
+    if not get_data_dataset():
+        return os.path.realpath(path).startswith(
+            get_user_data_directory(user.username))
+    else:
+        return os.path.abspath(path).startswith(
+            get_user_data_directory(user.username))
 
 
 def is_safe_for_get(requested_path: str, user: User) -> bool:
@@ -201,7 +207,7 @@ def path_from_data_dir(url_root: str, platform_path: str) -> str:
 
 
 def path_exists(complete_path: str) -> bool:
-    dataset, error = get_data_dataset()
+    dataset = get_data_dataset()
     if not dataset:
         return os.path.exists(complete_path)
 

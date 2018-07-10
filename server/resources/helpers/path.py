@@ -201,15 +201,14 @@ def path_from_data_dir(url_root: str, platform_path: str) -> str:
 
 
 def path_exists(complete_path: str) -> bool:
-    return os.path.exists(complete_path)
+    dataset, error = get_data_dataset()
+    if not dataset:
+        return os.path.exists(complete_path)
 
     # We are using a dataset
-    dataset, error = get_data_dataset()
-
-    # If the dataset was not setup properly at this point,
-    #  we will manage it as a normal folder
-    if error:
-        return os.path.exists(complete_path)
+    # As symlinks may very probably be broken as we don't hold all the data,
+    # we will simply look at if a symlink or a folder exists at this path.
+    return os.path.isdir(complete_path) or os.path.islink(complete_path)
 
 
 from .executions import EXECUTIONS_DIRNAME

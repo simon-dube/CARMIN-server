@@ -58,7 +58,7 @@ def is_safe_path(path: str, follow_symlinks: bool = True) -> bool:
 
     if follow_symlinks and not get_data_dataset():
         return os.path.realpath(path).startswith(base_dir)
-    return os.path.abspath(path).startwith(base_dir)
+    return os.path.abspath(path).startswith(base_dir)
 
 
 def is_data_accessible(path: str, user: User) -> bool:
@@ -213,8 +213,9 @@ def path_exists(complete_path: str) -> bool:
 
     # We are using a dataset
     # As symlinks may very probably be broken as we don't hold all the data,
-    # we will simply look at if a symlink or a folder exists at this path.
-    return os.path.isdir(complete_path) or os.path.islink(complete_path)
+    # we will simply look at if a symlink, a file (if the file is not saved) or a folder
+    # exists at this path.
+    return os.path.exists(complete_path) or os.path.islink(complete_path)
 
 
 from .executions import EXECUTIONS_DIRNAME

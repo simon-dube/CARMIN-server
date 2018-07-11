@@ -104,5 +104,15 @@ UNSUPPORTED_DESCRIPTOR_TYPE = ErrorCodeAndMessage(
 DATA_DATASET_SIBLING_UNSPECIFIED = ErrorCodeAndMessage(
     170, "The data dataset has no sibling specified.")
 DATA_DATASET_SIBLING_CANT_UPDATE = ErrorCodeAndMessage(
-    170, "The data dataset was not able to update from sibling '{}'.")
+    175, "The data dataset was not able to update from sibling '{}'.")
+DATASET_CANT_GET = ErrorCodeAndMessage(
+    180, "Dataset could not get data from valid path '{}'.")
+DATASET_NOT_INSTALLED = ErrorCodeAndMessage(
+    185, "Attempted to performed action on uninstalled dataset at '{}'.")
+DATASET_CANT_DROP = ErrorCodeAndMessage(
+    190, "Dataset could not drop data from valid path '{}'.")
+DATASET_CANT_SAVE = ErrorCodeAndMessage(
+    195, "Dataset could not save data from valid path '{}'.")
+DATASET_CANT_PUBLISH = ErrorCodeAndMessage(
+    200, "Dataset could not publish data from valid path '{}'.")
 PAGE_NOT_FOUND = ErrorCodeAndMessage(404, "Page Not Found")

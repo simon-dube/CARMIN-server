@@ -7,7 +7,6 @@ from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, DATASET_CANT_GET, DATASET_CANT_DROP,
     DATASET_CANT_SAVE, DATASET_CANT_PUBLISH, DATASET_NOT_INSTALLED, DATA_DATASET_SIBLING_UNSPECIFIED)
 from server.resources.models.error_code_and_message import ErrorCodeAndMessage
-from server.resources.helpers.path import path_exists
 
 
 def get_data_dataset() -> Dataset:
@@ -70,3 +69,6 @@ def datalad_save_and_publish(dataset: Dataset, path: str) -> (bool, ErrorCodeAnd
     if not success:
         return False, None
     return datalad_publish(dataset, path)
+
+
+from server.resources.helpers.path import path_exists

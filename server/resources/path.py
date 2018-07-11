@@ -3,6 +3,7 @@ import json
 import shutil
 from flask_restful import Resource, request
 from flask import Response, make_response
+from server.common.datalad import (get_data_dataset, datalad_get, datalad_drop)
 from server.common.utils import marshal
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, ErrorCodeAndMessageAdditionalDetails,
@@ -10,14 +11,13 @@ from server.common.error_codes_and_messages import (
     MD5_ON_DIR, LIST_ACTION_ON_FILE, ACTION_REQUIRED, UNEXPECTED_ERROR,
     PATH_IS_DIRECTORY, INVALID_REQUEST, PATH_DOES_NOT_EXIST)
 from .models.upload_data import UploadDataSchema
-from .models.boolean_response import BooleanResponse
 from .models.path import Path as PathModel
 from .models.path import PathSchema
 from .decorators import login_required, unmarshal_request
 from .helpers.path import (is_safe_for_delete, upload_file, upload_archive,
-                           create_directory, generate_md5, is_safe_for_put,
-                           is_safe_for_get, make_absolute, get_content,
-                           get_path_list, path_exists)
+                           create_directory, is_safe_for_put,
+                           is_safe_for_get, make_absolute,
+                           path_exists, path_get_helper)
 
 
 class Path(Resource):
@@ -47,26 +47,27 @@ class Path(Resource):
         if not action:
             return marshal(ACTION_REQUIRED), 400
 
-        if action == 'content':
-            return get_content(requested_data_path)
-        elif action == 'properties':
-            path = PathModel.object_from_pathname(requested_data_path)
-            return marshal(path)
-        elif action == 'exists':
-            exists = path_exists(requested_data_path)
-            return marshal(BooleanResponse(exists))
-        elif action == 'list':
-            if not os.path.isdir(requested_data_path):
-                return marshal(LIST_ACTION_ON_FILE), 400
-            directory_list = get_path_list(complete_path)
-            return marshal(directory_list)
-        elif action == 'md5':
-            if os.path.isdir(requested_data_path):
-                return marshal(MD5_ON_DIR), 400
-            md5 = generate_md5(requested_data_path)
-            return marshal(md5)
-        else:
-            return marshal(INVALID_ACTION), 400
+        # Datalad overhead
+        dataset = get_data_dataset()
+        if dataset:
+            succes = datalad_get(dataset, requested_data_path)
+            if not succes:
+                return marshal(UNEXPECTED_ERROR)
+        # END Datalad overhead
+
+        content, code = path_get_helper(
+            action, requested_data_path, complete_path)
+
+        # Datalad overhead
+        if dataset:
+            succes = datalad_drop(dataset, requested_data_path)
+            # if not succes:
+            #     return marshal(UNEXPECTED_ERROR)
+        # END Datalad overhead
+
+        if code:
+            return content, code
+        return content
 
     @login_required
     def put(self, user, complete_path: str = ''):

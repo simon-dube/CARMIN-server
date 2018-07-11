@@ -15,7 +15,7 @@ from server.resources.models.path_md5 import PathMD5Schema
 from server.resources.models.upload_data import UploadData, UploadDataSchema
 from server.resources.models.boolean_response import BooleanResponseSchema
 from server.resources.models.error_code_and_message import ErrorCodeAndMessageSchema
-from server.resources.path import generate_md5
+from server.resources.helpers.path import generate_md5
 from server.test.fakedata.users import standard_user
 
 
@@ -362,7 +362,7 @@ class TestPathResource():
             })
         assert (not os.path.exists(
             os.path.join(app.config['DATA_DIRECTORY'], file_to_delete))
-                and response.status_code == 204)
+            and response.status_code == 204)
 
     def test_delete_non_empty_directory(self, test_client):
         directory_to_delete = "{}/subdirectory".format(
@@ -374,7 +374,7 @@ class TestPathResource():
             })
         assert (not os.path.exists(
             os.path.join(app.config['DATA_DIRECTORY'], directory_to_delete))
-                and response.status_code == 204)
+            and response.status_code == 204)
 
     def test_delete_empty_directory(self, test_client):
         directory_to_delete = "{}/empty_dir".format(standard_user().username)
@@ -385,7 +385,7 @@ class TestPathResource():
             })
         assert (not os.path.exists(
             os.path.join(app.config['DATA_DIRECTORY'], directory_to_delete))
-                and response.status_code == 204)
+            and response.status_code == 204)
 
     def test_delete_invalid_file(self, test_client):
         file_to_delete = "{}/does_not_exist".format(standard_user().username)

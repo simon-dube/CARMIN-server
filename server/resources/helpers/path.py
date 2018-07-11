@@ -10,7 +10,8 @@ from typing import List
 from binascii import Error
 from flask import Response, make_response, send_file
 from server import app
-from server.common.datalad import get_data_dataset
+from server.common.utils import marshal
+from server.resources.models.boolean_response import BooleanResponse
 from server.resources.models.upload_data import UploadData
 from server.resources.models.error_code_and_message import ErrorCodeAndMessage
 from server.database.models.user import User, Role
@@ -19,7 +20,31 @@ from server.resources.models.path_md5 import PathMD5
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageMarshaller, ErrorCodeAndMessageFormatter,
     PATH_IS_DIRECTORY, INVALID_PATH, PATH_EXISTS, INVALID_MODEL_PROVIDED,
-    NOT_AN_ARCHIVE, INVALID_BASE_64, UNEXPECTED_ERROR)
+    NOT_AN_ARCHIVE, INVALID_BASE_64, UNEXPECTED_ERROR, LIST_ACTION_ON_FILE,
+    MD5_ON_DIR, INVALID_ACTION)
+
+
+def path_get_helper(action: str, requested_data_path: str, complete_path: str) -> (any, int):
+    if action == 'content':
+        return get_content(requested_data_path), None
+    elif action == 'properties':
+        path = Path.object_from_pathname(requested_data_path)
+        return marshal(path), None
+    elif action == 'exists':
+        exists = path_exists(requested_data_path)
+        return marshal(BooleanResponse(exists)), None
+    elif action == 'list':
+        if not os.path.isdir(requested_data_path):
+            return marshal(LIST_ACTION_ON_FILE), 400
+        directory_list = get_path_list(complete_path)
+        return marshal(directory_list), None
+    elif action == 'md5':
+        if os.path.isdir(requested_data_path):
+            return marshal(MD5_ON_DIR), 400
+        md5 = generate_md5(requested_data_path)
+        return marshal(md5), None
+    else:
+        return marshal(INVALID_ACTION), 400
 
 
 def get_content(complete_path: str) -> Response:
@@ -219,3 +244,4 @@ def path_exists(complete_path: str) -> bool:
 
 
 from .executions import EXECUTIONS_DIRNAME
+from server.common.datalad import get_data_dataset

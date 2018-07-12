@@ -31,22 +31,22 @@ def get_helper(action: str, requested_data_path: str, complete_path: str) -> (an
         return get_content(requested_data_path), None
     elif action == 'properties':
         path = Path.object_from_pathname(requested_data_path)
-        return marshal(path), None
+        return path, None
     elif action == 'exists':
         exists = path_exists(requested_data_path)
-        return marshal(BooleanResponse(exists)), None
+        return BooleanResponse(exists), None
     elif action == 'list':
         if not os.path.isdir(requested_data_path):
-            return marshal(LIST_ACTION_ON_FILE), 400
+            return LIST_ACTION_ON_FILE, 400
         directory_list = get_path_list(complete_path)
-        return marshal(directory_list), None
+        return directory_list, None
     elif action == 'md5':
         if os.path.isdir(requested_data_path):
-            return marshal(MD5_ON_DIR), 400
+            return MD5_ON_DIR, 400
         md5 = generate_md5(requested_data_path)
-        return marshal(md5), None
+        return md5, None
     else:
-        return marshal(INVALID_ACTION), 400
+        return INVALID_ACTION, 400
 
 
 def put_helper_application_carmin_json(data, requested_data_path: str, complete_path: str) -> (any, int):

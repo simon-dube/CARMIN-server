@@ -12,7 +12,7 @@ from server.common.error_codes_and_messages import (
     PATH_IS_DIRECTORY, INVALID_REQUEST, PATH_DOES_NOT_EXIST)
 from .models.path import Path as PathModel
 from .models.path import PathSchema
-from .decorators import login_required, unmarshal_request
+from .decorators import login_required, unmarshal_request, datalad_update
 from .helpers.path import (is_safe_for_delete, upload_file, upload_archive,
                            create_directory, is_safe_for_put,
                            is_safe_for_get, make_absolute,
@@ -29,6 +29,7 @@ class Path(Resource):
     """
 
     @login_required
+    @datalad_update
     def get(self, user, complete_path: str = ''):
         """The @marshal_response() decorator is not used since this method can return
         a number of different Schemas or binary content. Use `response(Model)`
@@ -65,12 +66,14 @@ class Path(Resource):
             #     return marshal(UNEXPECTED_ERROR)
         # END Datalad overhead
 
+        if not isinstance(content, Response):
+            content = marshal(content)
         if code:
             return content, code
         return content
 
     @login_required
-    def put(self, user, complete_path: str = ''):
+    def put(self, user, complete_path: str=''):
         data = request.data
         requested_data_path = make_absolute(complete_path)
 
@@ -100,7 +103,7 @@ class Path(Resource):
         return marshal(INVALID_REQUEST), 400
 
     @login_required
-    def delete(self, user, complete_path: str = ''):
+    def delete(self, user, complete_path: str=''):
         requested_data_path = make_absolute(complete_path)
 
         if not is_safe_for_delete(requested_data_path, user):

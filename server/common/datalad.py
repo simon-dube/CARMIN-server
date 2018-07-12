@@ -42,15 +42,15 @@ def datalad_operation(dataset: Dataset, path: str, operation: Callable, error: E
 
 
 def datalad_get(dataset: Dataset, path: str) -> bool:
-    return datalad_operation(dataset, path, lambda: dataset.get(path=path, recursive=True), DATASET_CANT_GET)
+    return datalad_operation(dataset, path, lambda: dataset.get(path=path), DATASET_CANT_GET)
 
 
 def datalad_drop(dataset: Dataset, path: str) -> bool:
-    return datalad_operation(dataset, path, lambda: dataset.drop(path=path, recursive=True), DATASET_CANT_DROP)
+    return datalad_operation(dataset, path, lambda: dataset.drop(path=path), DATASET_CANT_DROP)
 
 
 def datalad_save(dataset: Dataset, path: str):
-    return datalad_operation(dataset, path, lambda: dataset.save(path=path, recursive=True), DATASET_CANT_SAVE)
+    return datalad_operation(dataset, path, lambda: dataset.save(path=path), DATASET_CANT_SAVE)
 
 
 def datalad_publish(dataset: Dataset, path: str, sibling: str = None) -> (bool, ErrorCodeAndMessage):

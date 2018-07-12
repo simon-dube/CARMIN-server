@@ -1,3 +1,4 @@
+import os
 from typing import Callable
 import logging
 from datalad.api import Dataset
@@ -59,9 +60,10 @@ def datalad_publish(dataset: Dataset, path: str, sibling: str = None) -> (bool, 
         sibling = app.config.get("DATA_REMOTE_SIBLING")
     if not sibling:
         return None, DATA_DATASET_SIBLING_UNSPECIFIED
+
     return datalad_operation(dataset, path,
                              lambda: dataset.publish(
-                                 path=path, to=sibling, recursive=True),
+                                 path=path, to=sibling),
                              DATASET_CANT_PUBLISH), None
 
 
@@ -74,6 +76,13 @@ def datalad_save_and_publish(dataset: Dataset, path: str) -> (bool, ErrorCodeAnd
 
 def datalad_remove(dataset: Dataset, path: str) -> bool:
     return datalad_operation(dataset, path, lambda: dataset.remove(path=path), DATASET_CANT_REMOVE)
+
+
+def datalad_remove_and_publish(dataset: Dataset, path: str) -> (bool, ErrorCodeAndMessage):
+    success = datalad_remove(dataset, path)
+    if not success:
+        return False, None
+    return datalad_publish(dataset, None)
 
 
 from server.resources.helpers.path import path_exists

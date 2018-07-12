@@ -4,7 +4,8 @@ import shutil
 from flask_restful import Resource, request
 from flask import Response, make_response
 from server.common.datalad import (
-    get_data_dataset, datalad_get, datalad_drop, datalad_save_and_publish)
+    get_data_dataset, datalad_get, datalad_drop,
+    datalad_save_and_publish, datalad_remove_and_publish)
 from server.common.utils import marshal
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, ErrorCodeAndMessageAdditionalDetails,
@@ -18,7 +19,8 @@ from .helpers.path import (is_safe_for_delete, upload_file, upload_archive,
                            is_safe_for_get, make_absolute,
                            path_exists, get_helper,
                            put_helper_application_carmin_json,
-                           put_helper_raw_data, put_helper_no_data, delete_helper_local)
+                           put_helper_raw_data, put_helper_no_data,
+                           delete_helper_local)
 
 
 class Path(Resource):
@@ -54,7 +56,7 @@ class Path(Resource):
         if dataset:
             succes = datalad_get(dataset, requested_data_path)
             if not succes:
-                return marshal(UNEXPECTED_ERROR)
+                return marshal(UNEXPECTED_ERROR), 500
         # END Datalad overhead
 
         content, code = get_helper(
@@ -107,7 +109,7 @@ class Path(Resource):
                     succes = datalad_save_and_publish(
                         dataset, requested_data_path)
                     if not succes:
-                        return marshal(UNEXPECTED_ERROR)
+                        return marshal(UNEXPECTED_ERROR), 500
                     datalad_drop(dataset, requested_data_path)
 
             return marshal(content), code, custom_header
@@ -129,5 +131,10 @@ class Path(Resource):
         content, code = None, None
         if not dataset:
             content, code = delete_helper_local(requested_data_path)
+        else:
+            success, error = datalad_remove_and_publish(
+                dataset, requested_data_path)
+            if not success:
+                return marshal(UNEXPECTED_ERROR), 500
 
-        return (content, code) if content and code else Response(status=204)
+        return (marshal(content), code) if content and code else Response(status=204)

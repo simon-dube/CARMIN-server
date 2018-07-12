@@ -94,8 +94,6 @@ class Path(Resource):
             content, code = put_helper_no_data(requested_data_path)
 
         if content:
-            print(content)
-            print(code)
             return (content, code) if code else content
 
         return marshal(INVALID_REQUEST), 400

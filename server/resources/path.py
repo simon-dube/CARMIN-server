@@ -10,14 +10,14 @@ from server.common.error_codes_and_messages import (
     INVALID_MODEL_PROVIDED, UNAUTHORIZED, INVALID_PATH, INVALID_ACTION,
     MD5_ON_DIR, LIST_ACTION_ON_FILE, ACTION_REQUIRED, UNEXPECTED_ERROR,
     PATH_IS_DIRECTORY, INVALID_REQUEST, PATH_DOES_NOT_EXIST)
-from .models.upload_data import UploadDataSchema
 from .models.path import Path as PathModel
 from .models.path import PathSchema
 from .decorators import login_required, unmarshal_request
 from .helpers.path import (is_safe_for_delete, upload_file, upload_archive,
                            create_directory, is_safe_for_put,
                            is_safe_for_get, make_absolute,
-                           path_exists, path_get_helper)
+                           path_exists, get_helper,
+                           put_helper_application_carmin_json, put_helper_raw_data, put_helper_no_data)
 
 
 class Path(Resource):
@@ -55,7 +55,7 @@ class Path(Resource):
                 return marshal(UNEXPECTED_ERROR)
         # END Datalad overhead
 
-        content, code = path_get_helper(
+        content, code = get_helper(
             action, requested_data_path, complete_path)
 
         # Datalad overhead
@@ -77,48 +77,25 @@ class Path(Resource):
         if not is_safe_for_put(requested_data_path, user):
             return marshal(INVALID_PATH), 401
 
+        content, code = None, None
         if request.headers.get(
                 'Content-Type',
                 default='').lower() == 'application/carmin+json' and data:
             # Request data contains base64 encoding of file or archive
             data = request.get_json(force=True, silent=True)
-            model, error = UploadDataSchema().load(data)
-            if error:
-                return marshal(
-                    ErrorCodeAndMessageAdditionalDetails(
-                        INVALID_MODEL_PROVIDED, error)), 400
-            if model.upload_type == "File":
-                if os.path.isdir(requested_data_path):
-                    error = ErrorCodeAndMessageFormatter(
-                        PATH_IS_DIRECTORY, complete_path)
-                    return marshal(error), 400
-                path, error = upload_file(model, requested_data_path)
-                if error:
-                    return marshal(error), 400
-                return marshal(path), 201
+            content, code = put_helper_application_carmin_json(
+                data, requested_data_path, complete_path)
 
-            if model.upload_type == "Archive":
-                path, error = upload_archive(model, requested_data_path)
-                if error:
-                    return marshal(error), 400
-                return marshal(path), 201
-        if data:
+        elif data:
             # Content-Type is not 'application/carmin+json',
             # request data is taken as raw text
-            try:
-                with open(requested_data_path, 'w') as f:
-                    f.write(data.decode('utf-8', errors='ignore'))
-                return marshal(
-                    PathModel.object_from_pathname(requested_data_path)), 201
-            except OSError:
-                return marshal(INVALID_PATH), 400
-        if not data:
-            path, error = create_directory(requested_data_path)
-            if error:
-                return marshal(error), 400
-            file_location_header = {'Location': path.platform_path}
-            string_path = json.dumps(PathSchema().dump(path).data)
-            return make_response((string_path, 201, file_location_header))
+            content, code = put_helper_raw_data(data, requested_data_path)
+        elif not data:
+            content, code = put_helper_no_data(requested_data_path)
+
+        if content:
+            print(content)
+            return (content, code) if code else content
 
         return marshal(INVALID_REQUEST), 400
 

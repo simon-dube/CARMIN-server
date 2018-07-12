@@ -1,4 +1,5 @@
 import os
+import json
 import tarfile
 import tempfile
 import zipfile
@@ -11,6 +12,7 @@ from binascii import Error
 from flask import Response, make_response, send_file
 from server import app
 from server.common.utils import marshal
+from server.resources.models.upload_data import UploadDataSchema
 from server.resources.models.boolean_response import BooleanResponse
 from server.resources.models.upload_data import UploadData
 from server.resources.models.error_code_and_message import ErrorCodeAndMessage
@@ -18,13 +20,13 @@ from server.database.models.user import User, Role
 from server.resources.models.path import Path, PathSchema
 from server.resources.models.path_md5 import PathMD5
 from server.common.error_codes_and_messages import (
-    ErrorCodeAndMessageMarshaller, ErrorCodeAndMessageFormatter,
+    ErrorCodeAndMessageMarshaller, ErrorCodeAndMessageFormatter, ErrorCodeAndMessageAdditionalDetails,
     PATH_IS_DIRECTORY, INVALID_PATH, PATH_EXISTS, INVALID_MODEL_PROVIDED,
     NOT_AN_ARCHIVE, INVALID_BASE_64, UNEXPECTED_ERROR, LIST_ACTION_ON_FILE,
     MD5_ON_DIR, INVALID_ACTION)
 
 
-def path_get_helper(action: str, requested_data_path: str, complete_path: str) -> (any, int):
+def get_helper(action: str, requested_data_path: str, complete_path: str) -> (any, int):
     if action == 'content':
         return get_content(requested_data_path), None
     elif action == 'properties':
@@ -45,6 +47,51 @@ def path_get_helper(action: str, requested_data_path: str, complete_path: str) -
         return marshal(md5), None
     else:
         return marshal(INVALID_ACTION), 400
+
+
+def put_helper_application_carmin_json(data, requested_data_path: str, complete_path: str) -> (any, int):
+    # Request data contains base64 encoding of file or archive
+    model, error = UploadDataSchema().load(data)
+    if error:
+        return marshal(
+            ErrorCodeAndMessageAdditionalDetails(
+                INVALID_MODEL_PROVIDED, error)), 400
+    if model.upload_type == "File":
+        if os.path.isdir(requested_data_path):
+            error = ErrorCodeAndMessageFormatter(
+                PATH_IS_DIRECTORY, complete_path)
+            return marshal(error), 400
+        path, error = upload_file(model, requested_data_path)
+        if error:
+            return marshal(error), 400
+        return marshal(path), 201
+
+    if model.upload_type == "Archive":
+        path, error = upload_archive(model, requested_data_path)
+        if error:
+            return marshal(error), 400
+        return marshal(path), 201
+
+    return None, None
+
+
+def put_helper_raw_data(data, requested_data_path: str) -> (any, int):
+    try:
+        with open(requested_data_path, 'w') as f:
+            f.write(data.decode('utf-8', errors='ignore'))
+        return marshal(
+            Path.object_from_pathname(requested_data_path)), 201
+    except OSError:
+        return marshal(INVALID_PATH), 400
+
+
+def put_helper_no_data(requested_data_path: str) -> (any, int):
+    path, error = create_directory(requested_data_path)
+    if error:
+        return marshal(error), 400
+    file_location_header = {'Location': path.platform_path}
+    string_path = json.dumps(PathSchema().dump(path).data)
+    return make_response((string_path, 201, file_location_header)), None
 
 
 def get_content(complete_path: str) -> Response:

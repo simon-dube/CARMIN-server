@@ -3,15 +3,15 @@ import json
 import shutil
 from flask_restful import Resource, request
 from flask import Response, make_response
-from server.common.datalad import (get_data_dataset, datalad_get, datalad_drop)
+from server.common.datalad import (
+    get_data_dataset, datalad_get, datalad_drop, datalad_save_and_publish)
 from server.common.utils import marshal
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, ErrorCodeAndMessageAdditionalDetails,
     INVALID_MODEL_PROVIDED, UNAUTHORIZED, INVALID_PATH, INVALID_ACTION,
     MD5_ON_DIR, LIST_ACTION_ON_FILE, ACTION_REQUIRED, UNEXPECTED_ERROR,
     PATH_IS_DIRECTORY, INVALID_REQUEST, PATH_DOES_NOT_EXIST)
-from .models.path import Path as PathModel
-from .models.path import PathSchema
+from .models.error_code_and_message import ErrorCodeAndMessage
 from .decorators import login_required, unmarshal_request, datalad_update
 from .helpers.path import (is_safe_for_delete, upload_file, upload_archive,
                            create_directory, is_safe_for_put,
@@ -98,6 +98,16 @@ class Path(Resource):
                 requested_data_path)
 
         if content:
+            # Datalad overhead
+            if not isinstance(content, ErrorCodeAndMessage):
+                dataset = get_data_dataset()
+                if dataset:
+                    succes = datalad_save_and_publish(
+                        dataset, requested_data_path)
+                    if not succes:
+                        return marshal(UNEXPECTED_ERROR)
+                    datalad_drop(dataset, requested_data_path)
+
             return marshal(content), code, custom_header
 
         return marshal(INVALID_REQUEST), 400

@@ -52,7 +52,7 @@ def get_helper(action: str, requested_data_path: str, complete_path: str) -> (an
 def put_helper_application_carmin_json(data, requested_data_path: str, complete_path: str) -> (any, int):
     # Request data contains base64 encoding of file or archive
     model, error = UploadDataSchema().load(data or dict())
-    print(error)
+
     if error:
         return marshal(
             ErrorCodeAndMessageAdditionalDetails(

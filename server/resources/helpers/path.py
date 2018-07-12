@@ -86,13 +86,13 @@ def put_helper_raw_data(data, requested_data_path: str) -> (any, int):
         return marshal(INVALID_PATH), 400
 
 
-def put_helper_no_data(requested_data_path: str) -> (any, int):
+def put_helper_no_data(requested_data_path: str) -> (any, int, any):
     path, error = create_directory(requested_data_path)
     if error:
-        return marshal(error), 400
+        return marshal(error), 400, None
     file_location_header = {'Location': path.platform_path}
-    string_path = json.dumps(PathSchema().dump(path).data)
-    return make_response((string_path, 201, file_location_header)), None
+    # string_path = json.dumps(PathSchema().dump(path).data)
+    return marshal(path), 201, file_location_header
 
 
 def get_content(complete_path: str) -> Response:

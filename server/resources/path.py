@@ -77,7 +77,7 @@ class Path(Resource):
         if not is_safe_for_put(requested_data_path, user):
             return marshal(INVALID_PATH), 401
 
-        content, code = None, None
+        content, code, custom_header = None, None, None
         if request.headers.get(
                 'Content-Type',
                 default='').lower() == 'application/carmin+json':
@@ -91,10 +91,11 @@ class Path(Resource):
             # request data is taken as raw text
             content, code = put_helper_raw_data(data, requested_data_path)
         elif not data:
-            content, code = put_helper_no_data(requested_data_path)
+            content, code, custom_header = put_helper_no_data(
+                requested_data_path)
 
         if content:
-            return (content, code) if code else content
+            return content, code, custom_header
 
         return marshal(INVALID_REQUEST), 400
 

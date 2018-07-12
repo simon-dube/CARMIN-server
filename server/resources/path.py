@@ -73,6 +73,7 @@ class Path(Resource):
         return content
 
     @login_required
+    @datalad_update
     def put(self, user, complete_path: str=''):
         data = request.data
         requested_data_path = make_absolute(complete_path)

@@ -20,7 +20,7 @@ from .helpers.path import (is_safe_for_delete, upload_file, upload_archive,
                            path_exists, get_helper,
                            put_helper_application_carmin_json,
                            put_helper_raw_data, put_helper_no_data,
-                           delete_helper_local)
+                           delete_helper_local, datalad_get_unlock_if_exists)
 
 
 class Path(Resource):
@@ -84,6 +84,8 @@ class Path(Resource):
         if not is_safe_for_put(requested_data_path, user):
             return marshal(INVALID_PATH), 401
 
+        datalad_get_unlock_if_exists(requested_data_path)
+
         content, code, custom_header = None, None, None
         if request.headers.get(
                 'Content-Type',
@@ -105,7 +107,7 @@ class Path(Resource):
             # Datalad overhead
             if not isinstance(content, ErrorCodeAndMessage):
                 dataset = get_data_dataset()
-                if dataset:
+                if dataset and data:
                     succes = datalad_save_and_publish(
                         dataset, requested_data_path)
                     if not succes:

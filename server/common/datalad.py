@@ -7,7 +7,7 @@ from server import app
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, DATASET_CANT_GET, DATASET_CANT_DROP,
     DATASET_CANT_SAVE, DATASET_CANT_PUBLISH, DATASET_NOT_INSTALLED,
-    DATA_DATASET_SIBLING_UNSPECIFIED, DATASET_CANT_REMOVE)
+    DATA_DATASET_SIBLING_UNSPECIFIED, DATASET_CANT_REMOVE, DATASET_CANT_UNLOCK)
 from server.resources.models.error_code_and_message import ErrorCodeAndMessage
 
 
@@ -55,7 +55,7 @@ def datalad_save(dataset: Dataset, path: str):
     return datalad_operation(dataset, path, lambda: dataset.save(path=path), DATASET_CANT_SAVE)
 
 
-def datalad_publish(dataset: Dataset, path: str, sibling: str = None) -> (bool, ErrorCodeAndMessage):
+def datalad_publish(dataset: Dataset, path: str, sibling: str=None) -> (bool, ErrorCodeAndMessage):
     if not sibling:
         sibling = app.config.get("DATA_REMOTE_SIBLING")
     if not sibling:
@@ -83,6 +83,10 @@ def datalad_remove_and_publish(dataset: Dataset, path: str) -> (bool, ErrorCodeA
     if not success:
         return False, None
     return datalad_publish(dataset, None)
+
+
+def datalad_unlock(dataset: Dataset, path: str) -> bool:
+    return datalad_operation(dataset, path, lambda: dataset.unlock(path=path), DATASET_CANT_UNLOCK)
 
 
 from server.resources.helpers.path import path_exists

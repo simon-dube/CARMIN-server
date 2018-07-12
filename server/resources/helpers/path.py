@@ -95,6 +95,15 @@ def put_helper_no_data(requested_data_path: str) -> (any, int, any):
     return path, 201, file_location_header
 
 
+def datalad_get_unlock_if_exists(path: str) -> bool:
+    dataset = get_data_dataset()
+    if dataset and path_exists(path) and not os.path.isdir(path):
+        success = datalad_get(dataset, path)
+        return datalad_unlock(dataset, path) if success else success
+
+    return True
+
+
 def delete_helper_local(requested_data_path: str) -> (any, int):
     if os.path.isdir(requested_data_path):
         shutil.rmtree(requested_data_path, ignore_errors=True)
@@ -305,4 +314,5 @@ def path_exists(complete_path: str) -> bool:
 
 
 from .executions import EXECUTIONS_DIRNAME
-from server.common.datalad import get_data_dataset
+from server.common.datalad import (
+    get_data_dataset, datalad_get, datalad_unlock)

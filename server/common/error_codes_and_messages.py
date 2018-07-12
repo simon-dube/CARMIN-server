@@ -117,4 +117,6 @@ DATASET_CANT_PUBLISH = ErrorCodeAndMessage(
     200, "Dataset could not publish data from valid path '{}'.")
 DATASET_CANT_REMOVE = ErrorCodeAndMessage(
     205, "Dataset could not publish data from path '{}'.")
+DATASET_CANT_UNLOCK = ErrorCodeAndMessage(
+    210, "Dataset could not unlock data from path '{}'.")
 PAGE_NOT_FOUND = ErrorCodeAndMessage(404, "Page Not Found")

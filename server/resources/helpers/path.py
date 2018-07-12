@@ -54,24 +54,23 @@ def put_helper_application_carmin_json(data, requested_data_path: str, complete_
     model, error = UploadDataSchema().load(data or dict())
 
     if error:
-        return marshal(
-            ErrorCodeAndMessageAdditionalDetails(
-                INVALID_MODEL_PROVIDED, error)), 400
+        return ErrorCodeAndMessageAdditionalDetails(
+            INVALID_MODEL_PROVIDED, error), 400
     if model.upload_type == "File":
         if os.path.isdir(requested_data_path):
             error = ErrorCodeAndMessageFormatter(
                 PATH_IS_DIRECTORY, complete_path)
-            return marshal(error), 400
+            return error, 400
         path, error = upload_file(model, requested_data_path)
         if error:
-            return marshal(error), 400
-        return marshal(path), 201
+            return error, 400
+        return path, 201
 
     if model.upload_type == "Archive":
         path, error = upload_archive(model, requested_data_path)
         if error:
-            return marshal(error), 400
-        return marshal(path), 201
+            return error, 400
+        return path, 201
 
     return None, None
 
@@ -80,19 +79,18 @@ def put_helper_raw_data(data, requested_data_path: str) -> (any, int):
     try:
         with open(requested_data_path, 'w') as f:
             f.write(data.decode('utf-8', errors='ignore'))
-        return marshal(
-            Path.object_from_pathname(requested_data_path)), 201
+        return Path.object_from_pathname(requested_data_path), 201
     except OSError:
-        return marshal(INVALID_PATH), 400
+        return INVALID_PATH, 400
 
 
 def put_helper_no_data(requested_data_path: str) -> (any, int, any):
     path, error = create_directory(requested_data_path)
     if error:
-        return marshal(error), 400, None
+        return error, 400, None
     file_location_header = {'Location': path.platform_path}
     # string_path = json.dumps(PathSchema().dump(path).data)
-    return marshal(path), 201, file_location_header
+    return path, 201, file_location_header
 
 
 def get_content(complete_path: str) -> Response:

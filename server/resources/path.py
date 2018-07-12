@@ -95,7 +95,7 @@ class Path(Resource):
                 requested_data_path)
 
         if content:
-            return content, code, custom_header
+            return marshal(content), code, custom_header
 
         return marshal(INVALID_REQUEST), 400
 

@@ -5,7 +5,8 @@ from datalad.support.exceptions import IncompleteResultsError
 from server import app
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, DATASET_CANT_GET, DATASET_CANT_DROP,
-    DATASET_CANT_SAVE, DATASET_CANT_PUBLISH, DATASET_NOT_INSTALLED, DATA_DATASET_SIBLING_UNSPECIFIED)
+    DATASET_CANT_SAVE, DATASET_CANT_PUBLISH, DATASET_NOT_INSTALLED,
+    DATA_DATASET_SIBLING_UNSPECIFIED, DATASET_CANT_REMOVE)
 from server.resources.models.error_code_and_message import ErrorCodeAndMessage
 
 
@@ -69,6 +70,10 @@ def datalad_save_and_publish(dataset: Dataset, path: str) -> (bool, ErrorCodeAnd
     if not success:
         return False, None
     return datalad_publish(dataset, path)
+
+
+def datalad_remove(dataset: Dataset, path: str) -> bool:
+    return datalad_operation(dataset, path, lambda: dataset.remove(path=path), DATASET_CANT_REMOVE)
 
 
 from server.resources.helpers.path import path_exists

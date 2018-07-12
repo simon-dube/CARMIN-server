@@ -17,7 +17,8 @@ from .helpers.path import (is_safe_for_delete, upload_file, upload_archive,
                            create_directory, is_safe_for_put,
                            is_safe_for_get, make_absolute,
                            path_exists, get_helper,
-                           put_helper_application_carmin_json, put_helper_raw_data, put_helper_no_data)
+                           put_helper_application_carmin_json,
+                           put_helper_raw_data, put_helper_no_data, delete_helper_local)
 
 
 class Path(Resource):
@@ -120,13 +121,13 @@ class Path(Resource):
         if not is_safe_for_delete(requested_data_path, user):
             return marshal(UNAUTHORIZED), 403
 
-        if os.path.isdir(requested_data_path):
-            shutil.rmtree(requested_data_path, ignore_errors=True)
-        else:
-            try:
-                os.remove(requested_data_path)
-            except FileNotFoundError:
-                return marshal(PATH_DOES_NOT_EXIST), 400
-            except OSError:
-                return marshal(UNEXPECTED_ERROR), 500
-        return Response(status=204)
+        if not path_exists(requested_data_path):
+            return marshal(PATH_DOES_NOT_EXIST), 400
+
+        dataset = get_data_dataset()
+
+        content, code = None, None
+        if not dataset:
+            content, code = delete_helper_local(requested_data_path)
+
+        return (content, code) if content and code else Response(status=204)

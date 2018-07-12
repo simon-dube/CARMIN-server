@@ -115,4 +115,6 @@ DATASET_CANT_SAVE = ErrorCodeAndMessage(
     195, "Dataset could not save data from valid path '{}'.")
 DATASET_CANT_PUBLISH = ErrorCodeAndMessage(
     200, "Dataset could not publish data from valid path '{}'.")
+DATASET_CANT_REMOVE = ErrorCodeAndMessage(
+    205, "Dataset could not publish data from path '{}'.")
 PAGE_NOT_FOUND = ErrorCodeAndMessage(404, "Page Not Found")

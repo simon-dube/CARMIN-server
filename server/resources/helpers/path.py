@@ -7,6 +7,8 @@ import mimetypes
 import hashlib
 import base64
 import datalad
+import shutil
+
 from typing import List
 from binascii import Error
 from flask import Response, make_response, send_file
@@ -23,7 +25,7 @@ from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageMarshaller, ErrorCodeAndMessageFormatter, ErrorCodeAndMessageAdditionalDetails,
     PATH_IS_DIRECTORY, INVALID_PATH, PATH_EXISTS, INVALID_MODEL_PROVIDED,
     NOT_AN_ARCHIVE, INVALID_BASE_64, UNEXPECTED_ERROR, LIST_ACTION_ON_FILE,
-    MD5_ON_DIR, INVALID_ACTION)
+    MD5_ON_DIR, INVALID_ACTION, PATH_DOES_NOT_EXIST)
 
 
 def get_helper(action: str, requested_data_path: str, complete_path: str) -> (any, int):
@@ -91,6 +93,19 @@ def put_helper_no_data(requested_data_path: str) -> (any, int, any):
     file_location_header = {'Location': path.platform_path}
     # string_path = json.dumps(PathSchema().dump(path).data)
     return path, 201, file_location_header
+
+
+def delete_helper_local(requested_data_path: str) -> (any, int):
+    if os.path.isdir(requested_data_path):
+        shutil.rmtree(requested_data_path, ignore_errors=True)
+    else:
+        try:
+            os.remove(requested_data_path)
+        except FileNotFoundError:
+            return PATH_DOES_NOT_EXIST, 400
+        except OSError:
+            return UNEXPECTED_ERROR, 500
+    return None, None
 
 
 def get_content(complete_path: str) -> Response:

@@ -80,7 +80,7 @@ class Path(Resource):
         content, code = None, None
         if request.headers.get(
                 'Content-Type',
-                default='').lower() == 'application/carmin+json' and data:
+                default='').lower() == 'application/carmin+json':
             # Request data contains base64 encoding of file or archive
             data = request.get_json(force=True, silent=True)
             content, code = put_helper_application_carmin_json(
@@ -95,6 +95,7 @@ class Path(Resource):
 
         if content:
             print(content)
+            print(code)
             return (content, code) if code else content
 
         return marshal(INVALID_REQUEST), 400

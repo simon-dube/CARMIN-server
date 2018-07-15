@@ -314,5 +314,5 @@ def path_exists(complete_path: str) -> bool:
 
 
 from .executions import EXECUTIONS_DIRNAME
-from server.common.datalad import (
+from server.datalad.utils import (
     get_data_dataset, datalad_get, datalad_unlock)

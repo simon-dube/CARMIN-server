@@ -11,7 +11,7 @@ from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, INVALID_MODEL_PROVIDED, MODEL_DUMPING_ERROR,
     MISSING_API_KEY, INVALID_API_KEY, UNAUTHORIZED, UNEXPECTED_ERROR, DATA_DATASET_SIBLING_UNSPECIFIED, DATA_DATASET_SIBLING_CANT_UPDATE)
 from server.database.models.user import User, Role
-from server.common.datalad import get_data_dataset
+from server.datalad.utils import get_data_dataset
 
 
 def unmarshal_request(schema, allow_none: bool = False, partial=False):

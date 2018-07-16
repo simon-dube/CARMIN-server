@@ -52,38 +52,43 @@ def datalad_drop(dataset: Dataset, path: str) -> bool:
     return datalad_operation(dataset, path, lambda: dataset.drop(path=path), DATASET_CANT_DROP)
 
 
-def datalad_save(dataset: Dataset, path: str):
+def datalad_save(dataset: Dataset, path: str) -> bool:
     return datalad_operation(dataset, path, lambda: dataset.save(path=path), DATASET_CANT_SAVE)
 
 
-def datalad_publish(dataset: Dataset, path: str, sibling: str=None) -> (bool, ErrorCodeAndMessage):
+def datalad_publish(dataset: Dataset, path: str, sibling: str=None, retry: bool = False) -> (bool, ErrorCodeAndMessage):
     if not sibling:
         sibling = app.config.get("DATA_REMOTE_SIBLING")
     if not sibling:
         return None, DATA_DATASET_SIBLING_UNSPECIFIED
 
-    return datalad_operation(dataset, path,
-                             lambda: dataset.publish(
-                                 path=path, to=sibling),
-                             DATASET_CANT_PUBLISH, sibling), None
+    success = datalad_operation(dataset, path,
+                                lambda: dataset.publish(
+                                    path=path, to=sibling),
+                                DATASET_CANT_PUBLISH, sibling)
+    if not success and retry:
+        thread = DataladFailsafePublisher(dataset, path)
+        thread.start()
+
+    return success, None
 
 
-def datalad_save_and_publish(dataset: Dataset, path: str) -> (bool, ErrorCodeAndMessage):
-    success = datalad_save(dataset, path)
-    if not success:
-        return False, None
-    return datalad_publish(dataset, path)
+# def datalad_save_and_publish(dataset: Dataset, path: str, retry: bool = False) -> (bool, ErrorCodeAndMessage):
+#     success, error = datalad_save(dataset, path)
+#     if not success:
+#         return False, error
+#     return datalad_publish(dataset, path, retry=retry)
 
 
 def datalad_remove(dataset: Dataset, path: str) -> bool:
     return datalad_operation(dataset, path, lambda: dataset.remove(path=path), DATASET_CANT_REMOVE)
 
 
-def datalad_remove_and_publish(dataset: Dataset, path: str) -> (bool, ErrorCodeAndMessage):
-    success = datalad_remove(dataset, path)
-    if not success:
-        return False, None
-    return datalad_publish(dataset, None)
+# def datalad_remove_and_publish(dataset: Dataset, path: str, retry: bool = False) -> (bool, ErrorCodeAndMessage):
+#     success, error = datalad_remove(dataset, path)
+#     if not success:
+#         return False, error
+#     return datalad_publish(dataset, None, retry=retry)
 
 
 def datalad_unlock(dataset: Dataset, path: str) -> bool:
@@ -102,4 +107,13 @@ def datalad_update(dataset: Dataset, path: str, sibling: str=None) -> (bool, Err
                              DATA_DATASET_SIBLING_CANT_UPDATE, sibling), None
 
 
+def datalad_get_unlock_if_exists(dataset: Dataset, path: str) -> bool:
+    if dataset and path_exists(path) and not os.path.isdir(path):
+        success = datalad_get(dataset, path)
+        return datalad_unlock(dataset, path) if success else success
+
+    return True
+
+
 from server.resources.helpers.path import path_exists
+from .publish_failsafe import DataladFailsafePublisher

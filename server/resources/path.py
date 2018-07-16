@@ -5,7 +5,7 @@ from flask_restful import Resource, request
 from flask import Response, make_response
 from server.datalad_f.utils import (
     get_data_dataset, datalad_get, datalad_drop,
-    datalad_save_and_publish, datalad_remove_and_publish)
+    datalad_save, datalad_remove, datalad_publish, datalad_get_unlock_if_exists)
 from server.common.utils import marshal
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, ErrorCodeAndMessageAdditionalDetails,
@@ -20,7 +20,7 @@ from .helpers.path import (is_safe_for_delete, upload_file, upload_archive,
                            path_exists, get_helper,
                            put_helper_application_carmin_json,
                            put_helper_raw_data, put_helper_no_data,
-                           delete_helper_local, datalad_get_unlock_if_exists)
+                           delete_helper_local)
 
 
 class Path(Resource):
@@ -54,8 +54,8 @@ class Path(Resource):
         # Datalad overhead
         dataset = get_data_dataset()
         if dataset:
-            succes = datalad_get(dataset, requested_data_path)
-            if not succes:
+            success = datalad_get(dataset, requested_data_path)
+            if not success:
                 return marshal(UNEXPECTED_ERROR), 500
         # END Datalad overhead
 
@@ -64,7 +64,8 @@ class Path(Resource):
 
         # Datalad overhead
         if dataset:
-            succes = datalad_drop(dataset, requested_data_path)
+            success = datalad_drop(dataset, requested_data_path)
+            dataset.close()
             # if not succes:
             #     return marshal(UNEXPECTED_ERROR)
         # END Datalad overhead
@@ -84,7 +85,11 @@ class Path(Resource):
         if not is_safe_for_put(requested_data_path, user):
             return marshal(INVALID_PATH), 401
 
-        datalad_get_unlock_if_exists(requested_data_path)
+        dataset = get_data_dataset()
+        success = datalad_get_unlock_if_exists(dataset, requested_data_path)
+        # TODO: Validate what type of error we want here (datalad info hidden?)
+        if not success:
+            return marshal(UNEXPECTED_ERROR), 500
 
         content, code, custom_header = None, None, None
         if request.headers.get(
@@ -104,15 +109,17 @@ class Path(Resource):
                 requested_data_path)
 
         if content:
-            # Datalad overhead
             if not isinstance(content, ErrorCodeAndMessage):
-                dataset = get_data_dataset()
                 if dataset and data:
-                    succes = datalad_save_and_publish(
-                        dataset, requested_data_path)
-                    if not succes:
+                    success = datalad_save(dataset, requested_data_path)
+                    if not success:
                         return marshal(UNEXPECTED_ERROR), 500
-                    datalad_drop(dataset, requested_data_path)
+                    success, error = datalad_publish(
+                        dataset, requested_data_path, retry=True)
+                    # TODO: Send WARNING if success is false
+                    # TODO: Send ERROR if error is not None
+                    if success:
+                        dataset.close()
 
             return marshal(content), code, custom_header
 
@@ -134,9 +141,13 @@ class Path(Resource):
         if not dataset:
             content, code = delete_helper_local(requested_data_path)
         else:
-            success, error = datalad_remove_and_publish(
-                dataset, requested_data_path)
+            success = datalad_remove(dataset, requested_data_path)
             if not success:
                 return marshal(UNEXPECTED_ERROR), 500
+            success = datalad_publish(dataset, requested_data_path, retry=True)
+            # TODO: Send WARNING if success is false
+            # TODO: Send ERROR if error is not None
+            if success:
+                dataset.close()
 
         return (marshal(content), code) if content and code else Response(status=204)

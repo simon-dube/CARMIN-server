@@ -11,7 +11,7 @@ from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, INVALID_MODEL_PROVIDED, MODEL_DUMPING_ERROR,
     MISSING_API_KEY, INVALID_API_KEY, UNAUTHORIZED, UNEXPECTED_ERROR, DATA_DATASET_SIBLING_UNSPECIFIED, DATA_DATASET_SIBLING_CANT_UPDATE)
 from server.database.models.user import User, Role
-from server.datalad.utils import get_data_dataset
+from server.datalad_f.utils import get_data_dataset, datalad_update as datalad_update_utils
 
 
 def unmarshal_request(schema, allow_none: bool = False, partial=False):
@@ -122,20 +122,12 @@ def datalad_update(func):
 
         # Using Datalad
         # Update Dataset from sibling
-        sibling = app.config.get(
-            "DATA_REMOTE_SIBLING")
-        if not sibling:
-            return ErrorCodeAndMessageMarshaller(DATA_DATASET_SIBLING_UNSPECIFIED), 500
+        success, error = datalad_update_utils(dataset, ".")
 
-        try:
-            dataset.update(path=".", sibling=sibling,
-                           merge=True, on_failure="stop")
-        except IncompleteResultsError as ire:
-            logger = logging.getLogger('server-error')
-            logger.error(ErrorCodeAndMessageFormatter(
-                DATA_DATASET_SIBLING_CANT_UPDATE, sibling).error_message)
-            logger.exception(ire)
-            return ErrorCodeAndMessageMarshaller(UNEXPECTED_ERROR)
+        if error:
+            return ErrorCodeAndMessageMarshaller(error), 500
+        if not success:
+            return ErrorCodeAndMessageMarshaller(UNEXPECTED_ERROR), 500
 
         return func(*args, **kwargs)
 

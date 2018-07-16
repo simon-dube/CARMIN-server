@@ -3,7 +3,7 @@ import json
 import shutil
 from flask_restful import Resource, request
 from flask import Response, make_response
-from server.datalad.utils import (
+from server.datalad_f.utils import (
     get_data_dataset, datalad_get, datalad_drop,
     datalad_save_and_publish, datalad_remove_and_publish)
 from server.common.utils import marshal

@@ -11,7 +11,8 @@ from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, INVALID_MODEL_PROVIDED, MODEL_DUMPING_ERROR,
     MISSING_API_KEY, INVALID_API_KEY, UNAUTHORIZED, UNEXPECTED_ERROR, DATA_DATASET_SIBLING_UNSPECIFIED, DATA_DATASET_SIBLING_CANT_UPDATE)
 from server.database.models.user import User, Role
-from server.datalad_f.utils import get_data_dataset, datalad_update as datalad_update_utils
+from server.datalad_f.utils import get_data_dataset
+from server.datalad_f.auto_updater import DATALAD_AUTO_UPDATE_MANAGER
 
 
 def unmarshal_request(schema, allow_none: bool = False, partial=False):
@@ -116,18 +117,20 @@ def admin_only(func):
 def datalad_update(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        dataset = get_data_dataset()
-        if not dataset:
+        if not DATALAD_AUTO_UPDATE_MANAGER:
             return func(*args, **kwargs)
 
         # Using Datalad
-        # Update Dataset from sibling
-        success, error = datalad_update_utils(dataset, ".")
-
-        if error:
-            return ErrorCodeAndMessageMarshaller(error), 500
-        if not success:
-            return ErrorCodeAndMessageMarshaller(UNEXPECTED_ERROR), 500
+        # Validate if the auto-updater is still running
+        if not DATALAD_AUTO_UPDATE_MANAGER.is_running():
+            # Something went wrong, we will force an update and then restart the auto-updater
+            success, error = DATALAD_AUTO_UPDATE_MANAGER.force_update()
+            if error:
+                return ErrorCodeAndMessageMarshaller(error), 500
+            if not success:
+                return ErrorCodeAndMessageMarshaller(UNEXPECTED_ERROR), 500
+            # Only if our own forced update went all-right will we restart the thread
+            DATALAD_AUTO_UPDATE_MANAGER.restart()
 
         return func(*args, **kwargs)
 

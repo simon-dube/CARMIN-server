@@ -9,7 +9,7 @@ from .utils import get_data_dataset, datalad_update
 class DataladAutoUpdater(Thread):
     def __init__(self, dataset: Dataset, interval_sec: int):
         Thread.__init__(self)
-        # self.daemon = True
+        self.daemon = True
         self.dataset = dataset
         self.interval_sec = interval_sec
         self.last_interval = time()
@@ -52,6 +52,9 @@ class DataladAutoUpdaterManager():
     def restart(self):
         self.updater = DataladAutoUpdater(self.dataset, self.interval_sec)
         self.start()
+
+    def force_update(self):
+        return self.updater.force_update()
 
     def kill(self):
         if self.is_running():

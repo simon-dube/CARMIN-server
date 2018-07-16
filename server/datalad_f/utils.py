@@ -97,8 +97,8 @@ def datalad_update(dataset: Dataset, path: str, sibling: str=None) -> (bool, Err
         return None, DATA_DATASET_SIBLING_UNSPECIFIED
 
     return datalad_operation(dataset, path,
-                             lambda: dataset.update(path=path, sibling=sibling,
-                                                    merge=True, on_failure="stop"),
+                             lambda: dataset.update(
+                                 path=path, sibling=sibling, merge=True, on_failure="stop"),
                              DATA_DATASET_SIBLING_CANT_UPDATE, sibling), None
 
 

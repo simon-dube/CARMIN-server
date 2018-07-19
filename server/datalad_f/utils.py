@@ -33,7 +33,7 @@ def datalad_operation(dataset: Dataset, path: str, operation: Callable, error: E
         return False
 
     try:
-        operation()
+        result = operation()
         return True
     except IncompleteResultsError as ire:
         logger = logging.getLogger('server-error')

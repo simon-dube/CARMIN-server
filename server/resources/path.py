@@ -51,24 +51,22 @@ class Path(Resource):
         if not action:
             return marshal(ACTION_REQUIRED), 400
 
-        # Datalad overhead
+        # Datalad get content
         dataset = get_data_dataset()
         if dataset:
             success = datalad_get(dataset, requested_data_path)
             if not success:
                 return marshal(UNEXPECTED_ERROR), 500
-        # END Datalad overhead
 
         content, code = get_helper(
             action, requested_data_path, complete_path)
 
-        # Datalad overhead
+        # Datalad drop content
         if dataset:
             success = datalad_drop(dataset, requested_data_path)
             dataset.close()
             # if not succes:
             #     return marshal(UNEXPECTED_ERROR)
-        # END Datalad overhead
 
         if not isinstance(content, Response):
             content = marshal(content)
@@ -85,6 +83,7 @@ class Path(Resource):
         if not is_safe_for_put(requested_data_path, user):
             return marshal(INVALID_PATH), 401
 
+        # If using datalad, will get and unlock the files if they exist
         dataset = get_data_dataset()
         success = datalad_get_unlock_if_exists(dataset, requested_data_path)
         # TODO: Validate what type of error we want here (datalad info hidden?)
@@ -110,6 +109,7 @@ class Path(Resource):
 
         if content:
             if not isinstance(content, ErrorCodeAndMessage):
+                # If using datalad, save content and publish
                 if dataset and data:
                     success = datalad_save(dataset, requested_data_path)
                     if not success:
@@ -126,6 +126,7 @@ class Path(Resource):
         return marshal(INVALID_REQUEST), 400
 
     @login_required
+    @datalad_update
     def delete(self, user, complete_path: str=''):
         requested_data_path = make_absolute(complete_path)
 

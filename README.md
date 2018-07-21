@@ -87,27 +87,36 @@ docker run -p 8080:8080 \
 
 Instead of hosting the server data locally, the CARMIN server data can also be treated as a Datalad dataset and be hosted on any git-annex remote properly setup. Next, you will find the required steps to setup a dataset for which the data will be hosted on a Google Drive with the dataset made accessible on GitHub. These steps were only tested on Linux. They may vary for other operating systems.
 
-1. Install the latest version of git-annex. For instructions on how to install git-annex, refer to the [official documention](http://git-annex.branchable.com/install/).
+1. Install the latest version of git-annex. For instructions on how to install git-annex, refer to the [official documentation](http://git-annex.branchable.com/install/).
 2. Install the develop branch of [git-annex-remote-googledrive](https://github.com/Lykos153/git-annex-remote-googledrive). The use of the develop branch is important as we will use a new feature that was not yet published to the master branch.
 3. Open Google Drive using your Google account and create a folder anywhere. If you don't already have one, now is the time to create one.
 3. Navigate to your `DATA_DIRECTORY` and launch a terminal.
 4. From there, run the following commands:
 ```bash
 datalad create 
-# This will create a dataset inside the DATA_DIRECTORY. In case of error, this is probably caused by the admin user folder that was created when you first launch the server. In this case, add the -f option for Datalad to create a dataset in a non-empty folder. 
+```
+This will create a dataset inside the DATA_DIRECTORY. In case of error, this is probably caused by the admin user folder that was created when you first launch the server. In this case, add the -f option for Datalad to create a dataset in a non-empty folder. 
 
+```bash
 git-annex-remote-googledrive setup
-# This command is used to setup the necessary files for git-annex to be able to setup a Google Drive as an annex. Simply navigate to the link provided, autheticate yourself with a the same Google account used earlier and enter the resulting string in the console as requested.
+```
+This command is used to setup the necessary files for git-annex to be able to setup a Google Drive as an annex. Simply navigate to the link provided, autheticate yourself with a the same Google account used earlier and enter the resulting string in the console as requested.
 
+```bash
 git annex initremote google type=external externaltype=googledrive root_id=[Created folder id] chunk=50MiB encryption=none mac=HMACSHA512
-# With this command, we now set Google Drive as a remote of our git-annex repository. Regarding the root_id, this corresponds to the path element located immediately after 'folders' when navigating to the folder you previously created in Google Drive.
+```
+With this command, we now set Google Drive as a remote of our git-annex repository. Regarding the root_id, this corresponds to the path element located immediately after 'folders' when navigating to the folder you previously created in Google Drive.
 
+```bash
 datalad create-sibling-github --publish-depends google --access-protocol ssh [REPOSITORY_NAME]
-# This step creates a GitHub repository for which, when data will be published to it, the data will actually be pushed to the google remote. Although GitHub cannot contain the dataset data, used with other remotes, it can be used to distribute the dataset itself.
+```
+This step creates a GitHub repository for which, when data will be published to it, the data will actually be pushed to the google remote. Although GitHub cannot contain the dataset data, used with other remotes, it can be used to distribute the dataset itself.
 
-# Finally, to indicate the CARMIN server to which remote the data should be published, namely the 'github' sibling (default name for the GitHub remote when using create-sibling-github), we must define the following environment variable:
+Finally, to indicate the CARMIN server to which remote the data should be published, namely the 'github' sibling (default name for the GitHub remote when using create-sibling-github), we must define the following environment variable:
+```bash
 export DATA_REMOTE_SIBLING=github
 ```
+
 We are now ready to use our Google Drive external data storage with our CARMIN server.
 
 ### Common Installation Problems

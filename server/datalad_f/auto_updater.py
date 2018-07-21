@@ -1,3 +1,4 @@
+import logging
 from time import time
 from threading import Thread
 from server import app
@@ -14,16 +15,24 @@ class DataladAutoUpdater(Thread):
         self.interval_sec = interval_sec
         self.last_interval = time()
         self.kill_received = False
+        self.name = "Automatic Dataset ({}) Updater".format(dataset.path)
 
     def run(self):
+        logger = logging.getLogger('background-thread')
+        logger.info("{} initialized".format(self.name))
+
         while not self.kill_received:
             if self.time_exceeded():
+                logger.info("Start {} update...".format(self.name))
                 while True:
                     success, error = datalad_update(self.dataset, ".")
                     if success:
                         break
+                logger.info("{} update complete".format(self.name))
                 self.last_interval = time()
+
         self.dataset.close()
+        logger.info("{} terminated".format(self.name))
 
     def force_update(self) -> (bool, ErrorCodeAndMessage):
         success, error = datalad_update(self.dataset, ".")
@@ -47,9 +56,10 @@ class DataladAutoUpdaterManager():
         self.updater.start()
 
     def is_running(self):
-        return self.updater.isAlive()
+        return self.updater and self.updater.isAlive()
 
     def restart(self):
+        self.kill()
         self.updater = DataladAutoUpdater(self.dataset, self.interval_sec)
         self.start()
 

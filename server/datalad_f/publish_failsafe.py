@@ -5,7 +5,7 @@ from datalad.api import Dataset
 class DataladFailsafePublisher(Thread):
     def __init__(self, dataset: Dataset, path: str, drop_after: bool = False):
         Thread.__init__(self)
-        self.daemon = True
+        self.daemon = False
         self.dataset = dataset
         self.path = path
         self.drop_after = drop_after

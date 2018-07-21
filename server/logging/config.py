@@ -50,6 +50,11 @@ LOGGING_CONFIG = {
             'level': 'WARNING',
             'propagate': False,
             'handlers': ['unexpected-crash']
+        },
+        'background-thread': {
+            'level': 'INFO',
+            'propagate': False,
+            'handlers': ['console']
         }
     }
 }

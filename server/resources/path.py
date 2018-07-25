@@ -4,7 +4,7 @@ import shutil
 from flask_restful import Resource, request
 from flask import Response, make_response
 from server.datalad_f.utils import (
-    get_data_dataset, datalad_get, datalad_drop,
+    get_data_dataset, datalad_get,
     datalad_save, datalad_remove, datalad_publish, datalad_get_unlock_if_exists)
 from server.common.utils import marshal
 from server.common.error_codes_and_messages import (
@@ -55,18 +55,12 @@ class Path(Resource):
         dataset = get_data_dataset()
         if dataset:
             success = datalad_get(dataset, requested_data_path)
+            dataset.close()
             if not success:
                 return marshal(UNEXPECTED_ERROR), 500
 
         content, code = get_helper(
             action, requested_data_path, complete_path)
-
-        # Datalad drop content
-        if dataset:
-            success = datalad_drop(dataset, requested_data_path)
-            dataset.close()
-            # if not succes:
-            #     return marshal(UNEXPECTED_ERROR)
 
         if not isinstance(content, Response):
             content = marshal(content)

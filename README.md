@@ -11,6 +11,7 @@ CARMIN-server is a lightweight server implementation of the [CARMIN API](https:/
   - [Database](#database)
   - [Installing Locally](#installing-locally)
   - [Installing with Docker](#installing-with-docker)
+  - [External Data Storage with Datalad (Only tested on Linux)](#external-data-storage-with-datalad-only-tested-on-linux)
   - [Common Installation Problems](#common-installation-problems)
   	  - [pg_config](#pg_config)
 - [Usage](#usage)

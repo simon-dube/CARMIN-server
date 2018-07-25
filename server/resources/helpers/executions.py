@@ -20,7 +20,8 @@ from server.resources.helpers.pipelines import get_pipeline
 from server.resources.helpers.pathnames import (
     INPUTS_FILENAME, EXECUTIONS_DIRNAME, DESCRIPTOR_FILENAME,
     CARMIN_FILES_FOLDER, STDOUT_FILENAME, STDERR_FILENAME)
-from server.datalad_f.utils import (get_data_dataset, datalad_get)
+from server.datalad_f.utils import (
+    get_data_dataset, datalad_get, datalad_remove, datalad_publish)
 
 
 def create_user_executions_dir(username: str):
@@ -53,7 +54,17 @@ def create_execution_directory(execution: ExecutionDB, user: User
 
 
 def delete_execution_directory(execution_dir_path: str):
-    shutil.rmtree(execution_dir_path, ignore_errors=True)
+    dataset = get_data_dataset()
+    if not dataset:
+        shutil.rmtree(execution_dir_path, ignore_errors=True)
+    else:
+        success = datalad_remove(dataset, execution_dir_path)
+        success, error = datalad_publish(
+            dataset, None, retry=True)
+        # TODO: Send WARNING if success is false
+        # TODO: Send ERROR if error is not None
+
+    dataset.close()
 
 
 def get_execution_dir(username: str, execution_identifier: str) -> str:

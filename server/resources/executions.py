@@ -15,12 +15,13 @@ from server.resources.helpers.executions import (
 from server.database.queries.executions import (get_all_executions_for_user,
                                                 get_execution)
 from .models.execution import ExecutionSchema
-from .decorators import unmarshal_request, marshal_response, login_required
+from .decorators import unmarshal_request, marshal_response, login_required, datalad_update
 from server.resources.models.descriptor.descriptor_abstract import Descriptor
 
 
 class Executions(Resource):
     @login_required
+    @datalad_update
     @marshal_response(ExecutionSchema(many=True))
     def get(self, user):
         offset = request.args.get('offset', type=query_converter)

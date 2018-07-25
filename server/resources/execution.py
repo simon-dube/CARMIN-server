@@ -50,6 +50,7 @@ class Execution(Resource):
             db.session.commit()
 
     @login_required
+    @datalad_update
     @marshal_response()
     def delete(self, user, execution_identifier):
         execution_db = get_execution(execution_identifier, db.session)

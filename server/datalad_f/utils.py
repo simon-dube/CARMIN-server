@@ -12,7 +12,10 @@ from server.resources.models.error_code_and_message import ErrorCodeAndMessage
 
 
 def get_data_dataset() -> Dataset:
-    dataset = Dataset(app.config.get("DATA_DIRECTORY"))
+    directory = app.config.get("DATA_DIRECTORY")
+    if not directory:
+        return None
+    dataset = Dataset(directory)
     return dataset if dataset.is_installed() else None
 
 
@@ -29,7 +32,7 @@ def is_dataset_and_path_valid(dataset: Dataset, path: str) -> bool:
 
 
 def datalad_operation(dataset: Dataset, path: str, operation: Callable, error: ErrorCodeAndMessage, sibling: str = None):
-    if not is_dataset_and_path_valid(dataset, path):
+    if path and not is_dataset_and_path_valid(dataset, path):
         return False
 
     try:
@@ -38,6 +41,8 @@ def datalad_operation(dataset: Dataset, path: str, operation: Callable, error: E
     except IncompleteResultsError as ire:
         logger = logging.getLogger('server-error')
         if error:
+            if not path:
+                path = dataset.path
             logger.error(ErrorCodeAndMessageFormatter(
                 error, path, sibling).error_message)
         logger.exception(ire)

@@ -20,7 +20,7 @@ from .helpers.path import (is_safe_for_delete, upload_file, upload_archive,
                            path_exists, get_helper,
                            put_helper_application_carmin_json,
                            put_helper_raw_data, put_helper_no_data,
-                           delete_helper_local)
+                           delete_helper_local, get_user_data_directory)
 
 
 class Path(Resource):
@@ -139,7 +139,8 @@ class Path(Resource):
             success = datalad_remove(dataset, requested_data_path)
             if not success:
                 return marshal(UNEXPECTED_ERROR), 500
-            success = datalad_publish(dataset, requested_data_path, retry=True)
+            success, error = datalad_publish(
+                dataset, None, retry=True)
             # TODO: Send WARNING if success is false
             # TODO: Send ERROR if error is not None
             if success:

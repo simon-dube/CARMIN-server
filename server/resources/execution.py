@@ -11,11 +11,12 @@ from server.resources.helpers.executions import (
     get_execution_as_model, get_execution_dir, delete_execution_directory)
 from server.resources.helpers.execution_kill import kill_all_execution_processes
 from server.resources.decorators import (login_required, marshal_response,
-                                         unmarshal_request)
+                                         unmarshal_request, datalad_update)
 
 
 class Execution(Resource):
     @login_required
+    @datalad_update
     @marshal_response(ExecutionSchema())
     def get(self, user, execution_identifier):
         execution_db = get_execution(execution_identifier, db.session)

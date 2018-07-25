@@ -20,6 +20,7 @@ from server.resources.helpers.pipelines import get_pipeline
 from server.resources.helpers.pathnames import (
     INPUTS_FILENAME, EXECUTIONS_DIRNAME, DESCRIPTOR_FILENAME,
     CARMIN_FILES_FOLDER, STDOUT_FILENAME, STDERR_FILENAME)
+from server.datalad_f.utils import (get_data_dataset, datalad_get)
 
 
 def create_user_executions_dir(username: str):
@@ -153,6 +154,14 @@ def load_inputs(username: str,
 
     if not path_exists(execution_inputs_absolute_path):
         return None, INVALID_PATH
+
+    # Datalad Load inputs
+    dataset = get_data_dataset()
+    if dataset:
+        success, error = datalad_get(dataset, execution_inputs_absolute_path)
+        dataset.close()
+        if not success:
+            return None, error
 
     with open(execution_inputs_absolute_path) as inputs_file:
         inputs = json.load(inputs_file)

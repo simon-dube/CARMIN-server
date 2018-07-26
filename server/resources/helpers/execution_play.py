@@ -16,7 +16,8 @@ from server.resources.helpers.executions import (
     STDERR_FILENAME)
 from server.resources.helpers.execution_kill import kill_execution_processes
 from server.resources.models.descriptor.descriptor_abstract import Descriptor
-from server.datalad_f.utils import (get_data_dataset, datalad_remove)
+from server.datalad_f.utils import (
+    get_data_dataset, datalad_remove, datalad_save, datalad_publish)
 
 
 def start_execution(user: User, execution: Execution, descriptor: Descriptor,
@@ -116,10 +117,16 @@ def execution_process(user: User, execution: Execution, descriptor: Descriptor,
 
             dataset = get_data_dataset()
             if dataset:
+                # Delete temporary absolute input paths files
                 datalad_remove(dataset, inputs_path)
+
+                # Save and publish new files in the execution folder and in the user folder
+                datalad_save(dataset, user_data_dir)
+                datalad_publish(dataset, None, retry=True)
             else:
                 # Delete temporary absolute input paths files
                 os.remove(inputs_path)
+            dataset.close()
 
 
 def ExecutionFailed(execution_db):

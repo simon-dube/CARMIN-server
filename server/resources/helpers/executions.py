@@ -169,10 +169,10 @@ def load_inputs(username: str,
     # Datalad Load inputs
     dataset = get_data_dataset()
     if dataset:
-        success, error = datalad_get(dataset, execution_inputs_absolute_path)
+        success = datalad_get(dataset, execution_inputs_absolute_path)
         dataset.close()
         if not success:
-            return None, error
+            return None, UNEXPECTED_ERROR
 
     with open(execution_inputs_absolute_path) as inputs_file:
         inputs = json.load(inputs_file)

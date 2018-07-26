@@ -1,4 +1,5 @@
 import os
+import json
 from typing import Callable
 import logging
 from datalad.api import Dataset
@@ -117,6 +118,17 @@ def datalad_get_unlock_if_exists(dataset: Dataset, path: str) -> bool:
         success = datalad_get(dataset, path)
         return datalad_unlock(dataset, path) if success else success
 
+    return True
+
+
+def datalad_get_inputs(dataset: Dataset, modified_inputs_path: str) -> bool:
+    with open(modified_inputs_path) as inputs_file:
+        inputs = json.load(inputs_file)
+
+    for key in inputs:
+        success = datalad_get(dataset, inputs[key])
+        if not success:
+            return False
     return True
 
 

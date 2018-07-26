@@ -4,7 +4,8 @@ from sqlalchemy.exc import IntegrityError
 from server.database import db
 from server.database.models.execution import Execution, ExecutionStatus
 from server.platform_properties import PLATFORM_PROPERTIES
-from server.common.error_codes_and_messages import UNEXPECTED_ERROR, INVOCATION_INITIALIZATION_FAILED
+from server.common.error_codes_and_messages import (
+    ErrorCodeAndMessageFormatter, ErrorCodeAndMessageAdditionalDetails, UNEXPECTED_ERROR, INVOCATION_INITIALIZATION_FAILED, UNSUPPORTED_DESCRIPTOR_TYPE)
 from server.resources.helpers.pipelines import (
     get_original_descriptor_path_and_type)
 from server.resources.helpers.executions import (
@@ -17,6 +18,8 @@ from server.database.queries.executions import (get_all_executions_for_user,
 from .models.execution import ExecutionSchema
 from .decorators import unmarshal_request, marshal_response, login_required, datalad_update
 from server.resources.models.descriptor.descriptor_abstract import Descriptor
+from server.datalad_f.utils import (
+    get_data_dataset, datalad_publish, datalad_save)
 
 
 class Executions(Resource):
@@ -39,6 +42,7 @@ class Executions(Resource):
         return user_executions
 
     @login_required
+    @datalad_update
     @unmarshal_request(ExecutionSchema())
     @marshal_response(ExecutionSchema())
     def post(self, model, user):
@@ -133,6 +137,18 @@ class Executions(Resource):
                                                       execution_db)
             if error:
                 return UNEXPECTED_ERROR
+
+            # Now that all operations regarding the newly created execution successfully completed,
+            # we can publish the execution information.
+            dataset = get_data_dataset()
+            if dataset:
+                success = datalad_save(dataset, carmin_files_path)
+                # TODO: REMOVE THIS LINE
+                print("PATH: {}".format(carmin_files_path))
+                success, error = datalad_publish(
+                    dataset, carmin_files_path, retry=True)
+                # TODO: How do we want to deal with files not published on execution creation?
+
             return execution
         except IntegrityError:
             db.session.rollback()

@@ -4,6 +4,7 @@ from server.common.error_codes_and_messages import (
     EXECUTION_NOT_FOUND, UNAUTHORIZED, UNEXPECTED_ERROR,
     CANNOT_KILL_NOT_RUNNING_EXECUTION, CANNOT_KILL_FINISHING_EXECUTION)
 from server.database import db
+from server.database.models.user import Role
 from server.database.queries.executions import get_execution, get_execution_processes
 from server.database.models.execution import Execution, ExecutionStatus, current_milli_time
 from server.resources.decorators import login_required, marshal_response

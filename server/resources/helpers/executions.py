@@ -55,14 +55,14 @@ def create_execution_directory(execution: ExecutionDB, user: User
 
 def delete_execution_directory(execution_dir_path: str):
     dataset = get_data_dataset()
-    if not dataset:
-        shutil.rmtree(execution_dir_path, ignore_errors=True)
-    else:
+    if dataset:
         success = datalad_remove(dataset, execution_dir_path)
         success, error = datalad_publish(
             dataset, None, retry=True)
         # TODO: Send WARNING if success is false
         # TODO: Send ERROR if error is not None
+    else:
+        shutil.rmtree(execution_dir_path, ignore_errors=True)
 
     dataset.close()
 

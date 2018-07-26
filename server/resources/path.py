@@ -133,9 +133,7 @@ class Path(Resource):
         dataset = get_data_dataset()
 
         content, code = None, None
-        if not dataset:
-            content, code = delete_helper_local(requested_data_path)
-        else:
+        if dataset:
             success = datalad_remove(dataset, requested_data_path)
             if not success:
                 return marshal(UNEXPECTED_ERROR), 500
@@ -145,5 +143,7 @@ class Path(Resource):
             # TODO: Send ERROR if error is not None
             if success:
                 dataset.close()
+        else:
+            content, code = delete_helper_local(requested_data_path)
 
         return (marshal(content), code) if content and code else Response(status=204)

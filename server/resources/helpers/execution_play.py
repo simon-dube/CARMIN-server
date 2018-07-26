@@ -16,6 +16,7 @@ from server.resources.helpers.executions import (
     STDERR_FILENAME)
 from server.resources.helpers.execution_kill import kill_execution_processes
 from server.resources.models.descriptor.descriptor_abstract import Descriptor
+from server.datalad_f.utils import (get_data_dataset, datalad_remove)
 
 
 def start_execution(user: User, execution: Execution, descriptor: Descriptor,
@@ -113,8 +114,12 @@ def execution_process(user: User, execution: Execution, descriptor: Descriptor,
             execution_db.end_date = current_milli_time()
             db.session.commit()
 
-            # Delete temporary absolute input paths files
-            os.remove(inputs_path)
+            dataset = get_data_dataset()
+            if dataset:
+                datalad_remove(dataset, inputs_path)
+            else:
+                # Delete temporary absolute input paths files
+                os.remove(inputs_path)
 
 
 def ExecutionFailed(execution_db):

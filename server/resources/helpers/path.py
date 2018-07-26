@@ -294,14 +294,16 @@ def path_from_data_dir(url_root: str, platform_path: str) -> str:
 
 def path_exists(complete_path: str) -> bool:
     dataset = get_data_dataset()
-    if not dataset:
+    if dataset:
+        # We are using a dataset
+        # As symlinks may very probably be broken as we don't hold all the data,
+        # we will simply look at if a symlink, a file (if the file is not saved) or a folder
+        # exists at this path.
+        result = os.path.exists(complete_path) or os.path.islink(complete_path)
+        dataset.close()
+        return result
+    else:
         return os.path.exists(complete_path)
-
-    # We are using a dataset
-    # As symlinks may very probably be broken as we don't hold all the data,
-    # we will simply look at if a symlink, a file (if the file is not saved) or a folder
-    # exists at this path.
-    return os.path.exists(complete_path) or os.path.islink(complete_path)
 
 
 from .executions import EXECUTIONS_DIRNAME

@@ -12,8 +12,7 @@ from server.database.queries.executions import get_execution
 from server.resources.models.execution import Execution
 from server.resources.helpers.path import get_user_data_directory
 from server.resources.helpers.executions import (
-    get_execution_dir, get_descriptor_path, std_file_path, STDOUT_FILENAME,
-    STDERR_FILENAME)
+    get_execution_dir, get_descriptor_path, std_file_path, get_execution_carmin_files_dir, STDOUT_FILENAME,  STDERR_FILENAME)
 from server.resources.helpers.execution_kill import kill_execution_processes
 from server.resources.models.descriptor.descriptor_abstract import Descriptor
 from server.datalad_f.utils import (
@@ -119,8 +118,12 @@ def execution_process(user: User, execution: Execution, descriptor: Descriptor,
             if dataset:
                 # Delete temporary absolute input paths files
                 datalad_remove(dataset, inputs_path)
+
                 # Save new files in the user folder
                 datalad_save(dataset, user_data_dir)
+                execution_carmin_files_dir = get_execution_carmin_files_dir(
+                    user.username, execution.identifier)
+                datalad_save(dataset, execution_carmin_files_dir)
             else:
                 # Delete temporary absolute input paths files
                 os.remove(inputs_path)

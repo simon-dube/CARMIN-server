@@ -19,7 +19,7 @@ from .models.execution import ExecutionSchema
 from .decorators import unmarshal_request, marshal_response, login_required, datalad_update
 from server.resources.models.descriptor.descriptor_abstract import Descriptor
 from server.datalad_f.utils import (
-    get_data_dataset, datalad_publish, datalad_save)
+    get_data_dataset, datalad_save)
 
 
 class Executions(Resource):
@@ -143,11 +143,6 @@ class Executions(Resource):
             dataset = get_data_dataset()
             if dataset:
                 success = datalad_save(dataset, carmin_files_path)
-                # TODO: REMOVE THIS LINE
-                print("PATH: {}".format(carmin_files_path))
-                success, error = datalad_publish(
-                    dataset, carmin_files_path, retry=True)
-                # TODO: How do we want to deal with files not published on execution creation?
 
             return execution
         except IntegrityError:

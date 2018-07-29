@@ -4,10 +4,10 @@ from threading import Thread
 from server import app
 from datalad.api import Dataset
 from server.resources.models.error_code_and_message import ErrorCodeAndMessage
-from .utils import get_data_dataset, datalad_update
+from .utils import get_data_dataset, datalad_update, datalad_publish
 
 
-class DataladAutoUpdater(Thread):
+class DataladAutoUpdaterPublisher(Thread):
     def __init__(self, dataset: Dataset, interval_sec: int):
         Thread.__init__(self)
         self.daemon = True
@@ -15,27 +15,43 @@ class DataladAutoUpdater(Thread):
         self.interval_sec = interval_sec
         self.last_interval = time()
         self.kill_received = False
-        self.name = "Automatic Dataset ({}) Updater".format(dataset.path)
+        self.name = "Dataset ({}) Updater-Publisher".format(dataset.path)
 
     def run(self):
         logger = logging.getLogger('background-thread')
-        logger.info("{} initialized".format(self.name))
+        logger.info("%s initialized", self.name)
 
         while not self.kill_received:
             if self.time_exceeded():
-                logger.info("Start {} update...".format(self.name))
-                while True:
-                    success, error = datalad_update(self.dataset, ".")
-                    if success:
-                        break
-                logger.info("{} update complete".format(self.name))
+                self.update()
+                self.publish()
                 self.last_interval = time()
 
         self.dataset.close()
-        logger.info("{} terminated".format(self.name))
+        logger.info("%s terminated", self.name)
+
+    def update(self):
+        logger = logging.getLogger('background-thread')
+        logger.info("Start %s update...", self.name)
+        while not self.kill_received:
+            success, error = datalad_update(self.dataset)
+            if success:
+                logger.info("%s update complete", self.name)
+                return
+            logger.info("%s update failed. Retrying...", self.name)
+
+    def publish(self):
+        logger = logging.getLogger('background-thread')
+        logger.info("Start %s publish...", self.name)
+        while not self.kill_received:
+            success, error = datalad_publish(self.dataset)
+            if success:
+                logger.info("%s publish complete", self.name)
+                return
+            logger.info("%s publish failed. Retrying...", self.name)
 
     def force_update(self) -> (bool, ErrorCodeAndMessage):
-        success, error = datalad_update(self.dataset, ".")
+        success, error = datalad_update(self.dataset)
         self.last_interval = time()
         return success, error
 
@@ -50,7 +66,7 @@ class DataladAutoUpdaterManager():
     def __init__(self, dataset: Dataset, interval_sec: int):
         self.dataset = dataset
         self.interval_sec = interval_sec
-        self.updater = DataladAutoUpdater(dataset, interval_sec)
+        self.updater = DataladAutoUpdaterPublisher(dataset, interval_sec)
 
     def start(self):
         self.updater.start()
@@ -60,7 +76,8 @@ class DataladAutoUpdaterManager():
 
     def restart(self):
         self.kill()
-        self.updater = DataladAutoUpdater(self.dataset, self.interval_sec)
+        self.updater = DataladAutoUpdaterPublisher(
+            self.dataset, self.interval_sec)
         self.start()
 
     def force_update(self):
@@ -74,4 +91,4 @@ class DataladAutoUpdaterManager():
 DATALAD_AUTO_UPDATE_MANAGER = None
 if get_data_dataset():
     DATALAD_AUTO_UPDATE_MANAGER = DataladAutoUpdaterManager(
-        get_data_dataset(), 20)
+        get_data_dataset(), 5)

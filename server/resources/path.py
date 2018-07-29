@@ -5,7 +5,7 @@ from flask_restful import Resource, request
 from flask import Response, make_response
 from server.datalad_f.utils import (
     get_data_dataset, datalad_get,
-    datalad_save, datalad_remove, datalad_publish, datalad_get_unlock_if_exists)
+    datalad_save, datalad_remove, datalad_get_unlock_if_exists)
 from server.common.utils import marshal
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, ErrorCodeAndMessageAdditionalDetails,
@@ -108,8 +108,6 @@ class Path(Resource):
                     success = datalad_save(dataset, requested_data_path)
                     if not success:
                         return marshal(UNEXPECTED_ERROR), 500
-                    success, error = datalad_publish(
-                        dataset, requested_data_path, retry=True)
                     # TODO: Send WARNING if success is false
                     # TODO: Send ERROR if error is not None
                     if success:
@@ -137,8 +135,6 @@ class Path(Resource):
             success = datalad_remove(dataset, requested_data_path)
             if not success:
                 return marshal(UNEXPECTED_ERROR), 500
-            success, error = datalad_publish(
-                dataset, None, retry=True)
             # TODO: Send WARNING if success is false
             # TODO: Send ERROR if error is not None
             if success:

@@ -124,10 +124,10 @@ def execution_process(user: User, execution: Execution, descriptor: Descriptor,
                 execution_carmin_files_dir = get_execution_carmin_files_dir(
                     user.username, execution.identifier)
                 datalad_save(dataset, execution_carmin_files_dir)
+                dataset.close()
             else:
                 # Delete temporary absolute input paths files
                 os.remove(inputs_path)
-            dataset.close()
 
 
 def ExecutionFailed(execution_db):

@@ -15,7 +15,7 @@ from server.resources.helpers.executions import (
 from server.resources.helpers.execution_play import start_execution
 from server.resources.models.descriptor.descriptor_abstract import Descriptor
 from server.datalad_f.utils import (
-    get_data_dataset, datalad_get, datalad_get_inputs)
+    get_data_dataset, datalad_get, datalad_get_unlock_inputs)
 
 
 class ExecutionPlay(Resource):
@@ -74,8 +74,8 @@ class ExecutionPlay(Resource):
             return UNEXPECTED_ERROR
 
         if dataset:
-            # We need to get all these input files first
-            success = datalad_get_inputs(dataset, modified_inputs_path)
+            # We need to get and unlock these input files first
+            success = datalad_get_unlock_inputs(dataset, modified_inputs_path)
             dataset.close()
             if not success:
                 logger = logging.getLogger('server-error')

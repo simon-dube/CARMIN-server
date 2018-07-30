@@ -103,14 +103,21 @@ def datalad_get_unlock_if_exists(dataset: Dataset, path: str) -> bool:
     return True
 
 
-def datalad_get_inputs(dataset: Dataset, modified_inputs_path: str) -> bool:
+def datalad_get_unlock_inputs(dataset: Dataset, modified_inputs_path: str) -> bool:
     with open(modified_inputs_path) as inputs_file:
         inputs = json.load(inputs_file)
 
+    files_gotten = list()
     for key in inputs:
-        success = datalad_get(dataset, inputs[key])
+        path = inputs[key]
+        success = datalad_get(dataset, path)
         if not success:
+            # We relock all files that were previously successfully gotten
+            for file_gotten in files_gotten:
+                datalad_save(dataset, path)
             return False
+        files_gotten.append(files_gotten)
+        success = datalad_unlock(dataset, path)
     return True
 
 

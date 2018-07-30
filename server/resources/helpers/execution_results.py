@@ -4,6 +4,7 @@ try:
 except ImportError:
     from scandir import scandir, walk
 from typing import List
+from server.common.error_codes_and_messages import PATH_DOES_NOT_EXIST
 from server.resources.helpers.executions import CARMIN_FILES_FOLDER, get_execution_dir
 from server.resources.models.error_code_and_message import ErrorCodeAndMessage
 from server.resources.models.path import Path
@@ -22,7 +23,7 @@ def get_output_files(username: str, execution_identifier: str
         dirs[:] = [d for d in dirs if d not in CARMIN_FILES_FOLDER]
 
         for f in files:
-            real_path = os.path.realpath(os.path.join(root, f))
+            real_path = os.path.join(root, f)
             output_files.append(Path.object_from_pathname(real_path))
 
     return output_files, None

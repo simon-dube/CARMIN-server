@@ -34,6 +34,6 @@ class Boutiques(Descriptor):
     @classmethod
     def execute(cls, user_data_dir, descriptor, input_data):
         return [
-            "bosh", "exec", "launch", "-u", "-v{0}:{0}".format(user_data_dir),
-            descriptor, input_data
+            "bosh", "exec", "launch", "-v{0}:{0}".format(
+                user_data_dir), "-u", descriptor, input_data
         ]

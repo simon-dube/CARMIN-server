@@ -54,7 +54,7 @@ class Path(Resource):
         # Datalad get content
         dataset = get_data_dataset()
         success_unlock = None
-        if dataset:
+        if dataset and action != 'exists':
             success = datalad_get(dataset, requested_data_path)
             # In this case, we will create an archive to send back to the user.
             # As we do not want to follow any symlink (as a user may have uploaded one manually),

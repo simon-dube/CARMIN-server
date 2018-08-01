@@ -139,10 +139,12 @@ class Executions(Resource):
                 return UNEXPECTED_ERROR
 
             # Now that all operations regarding the newly created execution successfully completed,
-            # we can publish the execution information.
+            # we can save the execution files.
             dataset = get_data_dataset()
             if dataset:
                 success = datalad_save(dataset, carmin_files_path)
+                # TODO: Determine what to do in case of save failure (should never happen)
+                dataset.close()
 
             return execution
         except IntegrityError:

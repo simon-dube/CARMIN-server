@@ -3,6 +3,7 @@ try:
     from os import scandir, walk
 except ImportError:
     from scandir import scandir, walk
+import logging
 from subprocess import Popen
 from cache_config import MAX_CACHE_SIZE, CACHE_CLEAR_TO
 from datalad.api import Dataset
@@ -27,9 +28,11 @@ def cache_clear(dataset: Dataset):
             all_files.append(fp)
             size += os.path.getsize(fp)
 
-    ordered_files = sorted(all_files, key=os.path.getatime)
     if size > MAX_CACHE_SIZE:
-        # ordered_files = sorted(all_files, key=os.path.getatime)
+        logger = logging.getLogger('background-thread')
+        logger.info("Cache clear initialized for dataset at %s", dataset.path)
+        ordered_files = sorted(all_files, key=os.path.getatime)
+        original_size = size
         index = 0
         while size > CACHE_CLEAR_TO and index < len(ordered_files):
             cur_file = ordered_files[index]
@@ -40,3 +43,7 @@ def cache_clear(dataset: Dataset):
             if exit_code == 0:
                 size -= cur_file_size
             index = index + 1
+
+        freed_bytes = original_size - size
+        logger.info(
+            "Cache clear completed for dataset at %s. Freed %s bytes.", dataset.path, freed_bytes)

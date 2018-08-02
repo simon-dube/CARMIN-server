@@ -46,4 +46,4 @@ def cache_clear(dataset: Dataset):
 
         freed_bytes = original_size - size
         logger.info(
-            "Cache clear completed for dataset at %s. Freed %s bytes.", dataset.path, freed_bytes)
+            "Cache clear completed for dataset at %s. Freed %s bytes.", dataset.path, "{:n}".format(freed_bytes))

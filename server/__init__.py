@@ -25,6 +25,12 @@ def main():
 
     # Datalad auto-updater
     if DATALAD_AUTO_UPDATE_MANAGER:
+        result = DATALAD_AUTO_UPDATE_MANAGER.safety_save()
+        if not result:
+            DATALAD_AUTO_UPDATE_MANAGER.kill()
+            print("Could not save some content of the data dataset at {}. Content may be out of sync.".format(
+                DATALAD_AUTO_UPDATE_MANAGER.dataset_path))
+            exit(1)
         DATALAD_AUTO_UPDATE_MANAGER.start()
 
     try:

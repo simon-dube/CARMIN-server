@@ -4,7 +4,11 @@ from threading import Thread
 from server import app
 from datalad.api import Dataset
 from server.resources.models.error_code_and_message import ErrorCodeAndMessage
-from .utils import get_data_dataset, datalad_update, datalad_publish
+from .utils import (get_data_dataset, datalad_update,
+                    datalad_publish, datalad_save)
+from server.database import db
+from server.database.queries.executions import get_users_with_running_executions
+from server.resources.helpers.path import get_user_data_directory
 
 
 class DataladAutoUpdaterPublisher(Thread):
@@ -86,6 +90,19 @@ class DataladAutoUpdaterManager():
     def kill(self):
         if self.is_running():
             self.updater.kill()
+
+    def safety_save(self):
+        users = get_users_with_running_executions(db.session)
+
+        for user in users:
+            user_folder = get_user_data_directory(user)
+            result = datalad_save(self.dataset, user_folder)
+            if not result:
+                return False
+        return True
+
+    def dataset_path(self):
+        return '' if not self.dataset else self.dataset.path
 
 
 DATALAD_AUTO_UPDATE_MANAGER = None

@@ -20,7 +20,7 @@ def get_data_dataset() -> Dataset:
     return dataset if dataset.is_installed() else None
 
 
-def is_dataset_and_path_valid(dataset: Dataset, path: str) -> bool:
+def is_dataset_and_path_valid(dataset: Dataset, path: str) -> any:
     if not dataset.is_installed():
         logger = logging.getLogger('server-error')
         logger.error(ErrorCodeAndMessageFormatter(
@@ -50,19 +50,19 @@ def datalad_operation(dataset: Dataset, path: str, operation: Callable, error: E
         return False
 
 
-def datalad_get(dataset: Dataset, path: str) -> bool:
+def datalad_get(dataset: Dataset, path: str) -> any:
     return datalad_operation(dataset, path, lambda: dataset.get(path=path), DATASET_CANT_GET)
 
 
-def datalad_drop(dataset: Dataset, path: str) -> bool:
+def datalad_drop(dataset: Dataset, path: str) -> any:
     return datalad_operation(dataset, path, lambda: dataset.drop(path=path), DATASET_CANT_DROP)
 
 
-def datalad_save(dataset: Dataset, path: str) -> bool:
+def datalad_save(dataset: Dataset, path: str = None) -> any:
     return datalad_operation(dataset, path, lambda: dataset.save(path=path), DATASET_CANT_SAVE)
 
 
-def datalad_publish(dataset: Dataset, path: str = None, sibling: str=None) -> (bool, ErrorCodeAndMessage):
+def datalad_publish(dataset: Dataset, path: str = None, sibling: str = None) -> (any, ErrorCodeAndMessage):
     if not sibling:
         sibling = app.config.get("DATA_REMOTE_SIBLING")
     if not sibling:
@@ -75,15 +75,15 @@ def datalad_publish(dataset: Dataset, path: str = None, sibling: str=None) -> (b
     return success, None
 
 
-def datalad_remove(dataset: Dataset, path: str) -> bool:
+def datalad_remove(dataset: Dataset, path: str) -> any:
     return datalad_operation(dataset, path, lambda: dataset.remove(path=path), DATASET_CANT_REMOVE)
 
 
-def datalad_unlock(dataset: Dataset, path: str) -> bool:
+def datalad_unlock(dataset: Dataset, path: str) -> any:
     return datalad_operation(dataset, path, lambda: dataset.unlock(path=path), DATASET_CANT_UNLOCK)
 
 
-def datalad_update(dataset: Dataset, path: str=None, sibling: str=None) -> (bool, ErrorCodeAndMessage):
+def datalad_update(dataset: Dataset, path: str=None, sibling: str=None) -> (any, ErrorCodeAndMessage):
     if not sibling:
         sibling = app.config.get("DATA_REMOTE_SIBLING")
     if not sibling:
@@ -95,7 +95,7 @@ def datalad_update(dataset: Dataset, path: str=None, sibling: str=None) -> (bool
                              DATA_DATASET_SIBLING_CANT_UPDATE, sibling), None
 
 
-def datalad_get_unlock_if_exists(dataset: Dataset, path: str) -> bool:
+def datalad_get_unlock_if_exists(dataset: Dataset, path: str) -> any:
     if dataset and path_exists(path) and not os.path.isdir(path):
         success = datalad_get(dataset, path)
         return datalad_unlock(dataset, path) if success else success
@@ -103,7 +103,7 @@ def datalad_get_unlock_if_exists(dataset: Dataset, path: str) -> bool:
     return True
 
 
-def datalad_get_unlock_inputs(dataset: Dataset, modified_inputs_path: str) -> bool:
+def datalad_get_unlock_inputs(dataset: Dataset, modified_inputs_path: str) -> any:
     with open(modified_inputs_path) as inputs_file:
         inputs = json.load(inputs_file)
 

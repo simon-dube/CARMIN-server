@@ -9,6 +9,7 @@ from .utils import (get_data_dataset, datalad_update,
 from server.database import db
 from server.database.queries.executions import get_users_with_running_executions
 from server.resources.helpers.path import get_user_data_directory
+from .cache_manager import cache_clear
 
 
 class DataladAutoUpdaterPublisher(Thread):
@@ -29,6 +30,7 @@ class DataladAutoUpdaterPublisher(Thread):
             if self.time_exceeded():
                 self.update()
                 self.publish()
+                cache_clear(self.dataset)
                 self.last_interval = time()
 
         self.dataset.close()

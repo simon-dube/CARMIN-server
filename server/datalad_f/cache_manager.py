@@ -7,11 +7,11 @@ import logging
 from subprocess import Popen
 from cache_config import MAX_CACHE_SIZE, CACHE_CLEAR_TO
 from datalad.api import Dataset
-from server.datalad_f.utils import datalad_drop
+from server.datalad_f.utils import datalad_drop, get_annex_objects_path
 
 
 def cache_clear(dataset: Dataset):
-    if MAX_CACHE_SIZE < 0:
+    if MAX_CACHE_SIZE <= 0:
         return
 
     # 1) Drop unused files to free space that should not be occupied in the first place
@@ -19,7 +19,7 @@ def cache_clear(dataset: Dataset):
     exit_code = process.wait()
     # 2) If the total objects size is still greater than the cache size, we will drop
     # the least recently used files until we reach the CACHE_CLEAR_TO size.
-    objects_path = os.path.join(dataset.path, '.git', 'annex', 'objects')
+    objects_path = get_annex_objects_path(dataset)
     size = 0
     all_files = list()
     for dirpath, _, filenames in os.walk(objects_path):

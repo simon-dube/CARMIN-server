@@ -1,3 +1,4 @@
+import os
 from flask_restful import Resource
 from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageFormatter, ErrorCodeAndMessageAdditionalDetails,
@@ -9,6 +10,10 @@ from server.database.queries.executions import get_execution, get_execution_proc
 from server.database.models.execution import Execution, ExecutionStatus, current_milli_time
 from server.resources.decorators import login_required, marshal_response
 from server.resources.helpers.execution_kill import kill_all_execution_processes
+from server.resources.helpers.executions import (
+    get_absolute_path_inputs_path, get_user_data_directory, get_execution_carmin_files_dir)
+from server.datalad_f.utils import (
+    get_data_dataset, datalad_remove, datalad_save)
 
 
 class ExecutionKill(Resource):
@@ -41,3 +46,21 @@ class ExecutionKill(Resource):
         for execution_process in execution_processes:
             db.session.delete(execution_process)
         db.session.commit()
+
+        modified_inputs_path = get_absolute_path_inputs_path(
+            user.username, execution_identifier)
+        dataset = get_data_dataset()
+        if dataset:
+            # Delete temporary absolute input paths files
+            datalad_remove(dataset, modified_inputs_path)
+
+            # Save new files in the user folder
+            user_data_dir = get_user_data_directory(user.username)
+            datalad_save(dataset, user_data_dir)
+            execution_carmin_files_dir = get_execution_carmin_files_dir(
+                user.username, execution_identifier)
+            datalad_save(dataset, execution_carmin_files_dir)
+            dataset.close()
+        else:
+            # Delete temporary absolute input paths files
+            os.remove(modified_inputs_path)

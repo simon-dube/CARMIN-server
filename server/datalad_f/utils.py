@@ -121,5 +121,9 @@ def datalad_get_unlock_inputs(dataset: Dataset, modified_inputs_path: str) -> an
     return True
 
 
+def get_annex_objects_path(dataset: Dataset):
+    return os.path.join(dataset.path, '.git', 'annex', 'objects')
+
+
 from server.resources.helpers.path import path_exists
 from .publish_failsafe import DataladFailsafePublisher

@@ -36,7 +36,8 @@ def main():
     try:
         app.run(host='0.0.0.0', port=port)
     finally:
-        DATALAD_AUTO_UPDATE_MANAGER.kill()
+        if DATALAD_AUTO_UPDATE_MANAGER:
+            DATALAD_AUTO_UPDATE_MANAGER.kill()
 
 
 from server.startup_validation import start_up

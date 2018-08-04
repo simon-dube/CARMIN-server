@@ -157,13 +157,7 @@ def is_data_accessible(path: str, user: User) -> bool:
             get_user_data_directory(user.username))
     else:
         # We explore symlinks until we reach the actual file
-        cur_path = path
-        while os.path.islink(cur_path):
-            path = cur_path
-            cur_path = os.path.abspath(os.readlink(path))
-
-        if not cur_path.startswith(get_annex_objects_path(dataset)):
-            path = cur_path
+        path = get_datalad_last_symlink_or_path(dataset, path)
 
         return os.path.abspath(path).startswith(
             get_user_data_directory(user.username))
@@ -309,6 +303,10 @@ def path_exists(complete_path: str) -> bool:
         # As symlinks may very probably be broken as we don't hold all the data,
         # we will simply look at if a symlink, a file (if the file is not saved) or a folder
         # exists at this path.
+
+        # We reach the deepest symlink not in .git/annex/objects
+        complete_path = get_datalad_last_symlink_or_path(
+            dataset, complete_path)
         result = os.path.exists(complete_path) or os.path.islink(complete_path)
         dataset.close()
         return result
@@ -318,4 +316,4 @@ def path_exists(complete_path: str) -> bool:
 
 from .executions import EXECUTIONS_DIRNAME
 from server.datalad_f.utils import (
-    get_data_dataset, datalad_get, datalad_unlock, get_annex_objects_path)
+    get_data_dataset, datalad_get, datalad_unlock, get_datalad_last_symlink_or_path)

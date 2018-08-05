@@ -152,19 +152,15 @@ def is_safe_path(path: str, follow_symlinks: bool = True) -> bool:
 
 
 def is_data_accessible(path: str, user: User) -> bool:
-    if user.role == Role.admin:
-        return True
 
     dataset = get_data_dataset()
-    if not dataset:
-        return os.path.realpath(path).startswith(
-            get_user_data_directory(user.username))
-    else:
-        # We explore symlinks until we reach the actual file
-        path = get_datalad_last_symlink_or_path(dataset, path)
+    # We explore symlinks until we reach the actual file
+    path = get_datalad_last_symlink_or_path(path, dataset)
 
-        return os.path.abspath(path).startswith(
-            get_user_data_directory(user.username))
+    if user.role == Role.admin:
+        return is_safe_path(path, False)
+    return os.path.abspath(path).startswith(
+        get_user_data_directory(user.username))
 
 
 def is_safe_for_get(requested_path: str, user: User) -> bool:

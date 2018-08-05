@@ -54,10 +54,6 @@ def datalad_get(dataset: Dataset, path: str) -> any:
     return datalad_operation(dataset, path, lambda: dataset.get(path=path), DATASET_CANT_GET)
 
 
-def datalad_drop(dataset: Dataset, path: str) -> any:
-    return datalad_operation(dataset, path, lambda: dataset.drop(path=path), DATASET_CANT_DROP)
-
-
 def datalad_save(dataset: Dataset, path: str = None) -> any:
     return datalad_operation(dataset, path, lambda: dataset.save(path=path), DATASET_CANT_SAVE)
 

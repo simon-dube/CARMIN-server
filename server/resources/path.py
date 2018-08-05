@@ -56,24 +56,24 @@ class Path(Resource):
         success_unlock = None
         if dataset and action != 'exists':
             success = datalad_get(dataset, requested_data_path)
-            # In this case, we will create an archive to send back to the user.
-            # As we do not want to follow any symlink (as a user may have uploaded one manually),
-            # instead of derefenrencing the files for the archive (follow symlinks to archive the actual file)
-            # we will instead unlock the related files for the time of the archive creation
-            if action == "content" and os.path.isdir(requested_data_path):
-                success_unlock = datalad_unlock(dataset, requested_data_path)
-                if not success_unlock:
-                    datalad_save(dataset, requested_data_path)
+            # # In this case, we will create an archive to send back to the user.
+            # # As we do not want to follow any symlink (as a user may have uploaded one manually),
+            # # instead of derefenrencing the files for the archive (follow symlinks to archive the actual file)
+            # # we will instead unlock the related files for the time of the archive creation
+            # if action == "content" and os.path.isdir(requested_data_path):
+            #     success_unlock = datalad_unlock(dataset, requested_data_path)
+            #     if not success_unlock:
+            #         datalad_save(dataset, requested_data_path)
             if not success:
                 return marshal(UNEXPECTED_ERROR), 500
 
         content, code = get_helper(
-            action, requested_data_path, complete_path)
+            action, requested_data_path, complete_path, user)
 
-        # If we unlocked some files for an archive result, we save them back.
-        if dataset and success_unlock and isinstance(success_unlock, list):
-            for file_unlocked in success_unlock:
-                datalad_save(dataset, file_unlocked["path"])
+        # # If we unlocked some files for an archive result, we save them back.
+        # if dataset and success_unlock and isinstance(success_unlock, list):
+        #     for file_unlocked in success_unlock:
+        #         datalad_save(dataset, file_unlocked["path"])
 
         if not isinstance(content, Response):
             content = marshal(content)
@@ -134,7 +134,6 @@ class Path(Resource):
     @datalad_update
     def delete(self, user, complete_path: str=''):
         requested_data_path = make_absolute(complete_path)
-
         if not is_safe_for_delete(requested_data_path, user):
             return marshal(UNAUTHORIZED), 403
 

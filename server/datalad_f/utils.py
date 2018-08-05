@@ -125,7 +125,8 @@ def get_datalad_last_symlink_or_path(dataset: Dataset, path: str) -> str:
     cur_path = path
     while os.path.islink(cur_path):
         path = cur_path
-        cur_path = os.path.abspath(os.readlink(path))
+        cur_path = os.path.normpath(os.path.join(
+            os.path.dirname(path), os.readlink(path)))
 
     if not cur_path.startswith(get_annex_objects_path(dataset)):
         path = cur_path
@@ -133,4 +134,3 @@ def get_datalad_last_symlink_or_path(dataset: Dataset, path: str) -> str:
 
 
 from server.resources.helpers.path import path_exists
-from .publish_failsafe import DataladFailsafePublisher

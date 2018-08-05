@@ -1,4 +1,8 @@
 import os
+try:
+    from os import scandir, walk
+except ImportError:
+    from scandir import scandir, walk
 import json
 import tarfile
 import tempfile
@@ -28,9 +32,9 @@ from server.common.error_codes_and_messages import (
     MD5_ON_DIR, INVALID_ACTION, PATH_DOES_NOT_EXIST)
 
 
-def get_helper(action: str, requested_data_path: str, complete_path: str) -> (any, int):
+def get_helper(action: str, requested_data_path: str, complete_path: str, user: User) -> (any, int):
     if action == 'content':
-        return get_content(requested_data_path), None
+        return get_content(requested_data_path, user), None
     elif action == 'properties':
         path = Path.object_from_pathname(requested_data_path)
         return path, None
@@ -108,10 +112,10 @@ def delete_helper_local(requested_data_path: str) -> (any, int):
     return None, None
 
 
-def get_content(complete_path: str) -> Response:
+def get_content(complete_path: str, user: User) -> Response:
     """Helper function for the `content` action used in the GET method."""
     if os.path.isdir(complete_path):
-        tarball = make_tarball(complete_path)
+        tarball = make_tarball(complete_path, user)
         response = send_file(
             tarball, mimetype="application/gzip", as_attachment=True)
         os.remove(tarball)
@@ -176,8 +180,7 @@ def is_safe_for_put(requested_path: str, user: User) -> bool:
 
 
 def is_safe_for_delete(requested_path: str, user: User) -> bool:
-    return (is_safe_for_put(requested_path, user)
-            and not requested_path == get_user_data_directory(user.username))
+    return is_safe_for_put(requested_path, user)
 
 
 def is_execution_dir(path: str, username: str) -> bool:
@@ -260,12 +263,24 @@ def generate_md5(data_path: str) -> PathMD5:
     return PathMD5(hash_md5.hexdigest())
 
 
-def make_tarball(data_path: str) -> tarfile:
+def make_tarball(data_path: str, user: User) -> tarfile:
     temp_file = os.path.join(tempfile.gettempdir(),
                              os.path.basename(data_path)) + ".tar.gz"
-    with tarfile.open(temp_file, mode='w:gz') as archive:
-        archive.add(data_path, arcname=os.path.basename(data_path))
+    with tarfile.open(temp_file, mode='w:gz', dereference=True) as archive:
+        for root, dirs, files in walk(data_path):
+            for f in files:
+                full_file_path = os.path.join(root, f)
+                if is_data_accessible(full_file_path, user):
+                    relDir = os.path.relpath(root, data_path)
+                    relFile = os.path.join(relDir, f)
+                    archive.add(full_file_path, arcname=relFile,
+                                filter=change_file_mode)
     return temp_file
+
+
+def change_file_mode(tarinfo: tarfile.TarInfo) -> tarfile.TarInfo:
+    tarinfo.mode = 0o777
+    return tarinfo
 
 
 def parent_dir_exists(requested_data_path: str) -> bool:

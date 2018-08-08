@@ -265,7 +265,7 @@ def make_tarball(data_path: str, user: User) -> tarfile:
         for root, dirs, files in walk(data_path):
             for f in files:
                 full_file_path = os.path.join(root, f)
-                if is_data_accessible(full_file_path, user):
+                if os.path.exists(full_file_path) and is_data_accessible(full_file_path, user):
                     relDir = os.path.relpath(root, data_path)
                     relFile = os.path.join(relDir, f)
                     archive.add(full_file_path, arcname=relFile,

@@ -94,9 +94,11 @@ class Path():
             os.path.relpath(absolute_path_to_resource,
                             app.config['DATA_DIRECTORY'])).as_posix()
 
+        file_exists = os.path.exists(absolute_path_to_resource)
         return Path(
             platform_path='{}path/{}'.format(request.url_root, rel_path),
-            last_modification_date=os.path.getmtime(absolute_path_to_resource),
+            last_modification_date=os.path.getmtime(
+                absolute_path_to_resource) if file_exists else None,
             is_directory=os.path.isdir(absolute_path_to_resource),
             size=Path.get_path_size(absolute_path_to_resource, is_directory),
             mime_type=mime_type,
@@ -117,7 +119,11 @@ class Path():
             for dirpath, _, filenames in os.walk(absolute_path):
                 for f in filenames:
                     fp = os.path.join(dirpath, f)
-                    size += os.path.getsize(fp)
+                    if os.path.exists(fp):
+                        size += os.path.getsize(fp)
         else:
-            size = os.path.getsize(absolute_path)
+            if os.path.exists(absolute_path):
+                size = os.path.getsize(absolute_path)
+            else:
+                size = None
         return size

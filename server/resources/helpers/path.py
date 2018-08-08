@@ -261,15 +261,27 @@ def generate_md5(data_path: str) -> PathMD5:
 def make_tarball(data_path: str, user: User) -> tarfile:
     temp_file = os.path.join(tempfile.gettempdir(),
                              os.path.basename(data_path)) + ".tar.gz"
-    with tarfile.open(temp_file, mode='w:gz', dereference=True) as archive:
+    with tarfile.open(temp_file, mode='w:gz') as archive:
         for root, dirs, files in walk(data_path):
             for f in files:
                 full_file_path = os.path.join(root, f)
                 if os.path.exists(full_file_path) and is_data_accessible(full_file_path, user):
-                    relDir = os.path.relpath(root, data_path)
-                    relFile = os.path.join(relDir, f)
-                    archive.add(full_file_path, arcname=relFile,
-                                filter=change_file_mode)
+                    archive.dereference = True
+                else:
+                    archive.dereference = False
+                relDir = os.path.relpath(root, data_path)
+                relFile = os.path.join(relDir, f)
+                archive.add(full_file_path, arcname=relFile,
+                            filter=change_file_mode)
+            archive.dereference = False
+            for f in dirs:
+                full_file_path = os.path.join(root, f)
+                if not os.path.islink(full_file_path) and os.listdir(full_file_path):
+                    continue
+                relDir = os.path.relpath(root, data_path)
+                relFile = os.path.join(relDir, f)
+                archive.add(full_file_path, arcname=relFile,
+                            filter=change_file_mode)
     return temp_file
 
 

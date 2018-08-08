@@ -1,4 +1,8 @@
 import os
+try:
+    from os import scandir, walk
+except ImportError:
+    from scandir import scandir, walk
 import json
 from typing import Callable
 import logging
@@ -50,11 +54,64 @@ def datalad_operation(dataset: Dataset, path: str, operation: Callable, error: E
         return False
 
 
-def datalad_get(dataset: Dataset, path: str) -> any:
-    return datalad_operation(dataset, path, lambda: dataset.get(path=path), DATASET_CANT_GET)
+def datalad_get(dataset: Dataset, path: str, follow_symlinks: bool = True) -> any:
+
+    paths = [path]
+    if follow_symlinks:
+        paths = find_paths_to_get(dataset, path)
+
+    all_succeeded = True
+    results = list()
+    for path_to_get in paths:
+        result = datalad_operation(dataset, path_to_get, lambda: dataset.get(
+            path=path_to_get), DATASET_CANT_GET)
+        if result:
+            results.append(result)
+        else:
+            all_succeeded = False
+    return results if all_succeeded else False
 
 
-def datalad_save(dataset: Dataset, path: str = None) -> any:
+def find_paths_to_get(dataset: Dataset, path: str):
+    paths_to_get = list()
+    paths_to_get.append(path)
+    index = 0
+    while index < len(paths_to_get):
+        current_path = paths_to_get[index]
+        if os.path.isdir(current_path):
+            for root, dirs, files in walk(current_path):
+                datalad_add_missing_paths_to_get(
+                    dataset, root, dirs, paths_to_get)
+                datalad_add_missing_paths_to_get(
+                    dataset, root, files, paths_to_get)
+        else:
+            final_path = get_datalad_last_symlink_or_path(
+                current_path, dataset)
+            if final_path != current_path and is_safe_path(final_path) and not datalad_to_be_gotten(final_path, paths_to_get):
+                paths_to_get.append(final_path)
+        index += 1
+    return paths_to_get
+
+
+def datalad_add_missing_paths_to_get(dataset: Dataset, root: str, paths_to_check: list, paths_to_get: list):
+    for p in paths_to_check:
+        full_path = os.path.join(root, p)
+        if not os.path.islink(full_path):
+            continue
+        final_path = get_datalad_last_symlink_or_path(
+            full_path, dataset)
+        if is_safe_path(final_path) and not datalad_to_be_gotten(final_path, paths_to_get):
+            paths_to_get.append(final_path)
+
+
+def datalad_to_be_gotten(path: str, paths_to_get: list) -> bool:
+    for path_to_get in paths_to_get:
+        if path.startswith(path_to_get):
+            return True
+    return False
+
+
+def datalad_save(dataset: Dataset, path: str=None) -> any:
     return datalad_operation(dataset, path, lambda: dataset.save(path=path), DATASET_CANT_SAVE)
 
 
@@ -133,4 +190,4 @@ def get_datalad_last_symlink_or_path(path: str, dataset: Dataset) -> str:
     return path
 
 
-from server.resources.helpers.path import path_exists
+from server.resources.helpers.path import path_exists, is_safe_path

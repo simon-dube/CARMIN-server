@@ -156,7 +156,6 @@ def is_data_accessible(path: str, user: User) -> bool:
     dataset = get_data_dataset()
     # We explore symlinks until we reach the actual file
     path = get_datalad_last_symlink_or_path(path, dataset)
-
     if user.role == Role.admin:
         return is_safe_path(path, False)
     return os.path.abspath(path).startswith(
@@ -317,7 +316,7 @@ def path_exists(complete_path: str) -> bool:
 
         # We reach the deepest symlink not in .git/annex/objects
         complete_path = get_datalad_last_symlink_or_path(
-            dataset, complete_path)
+            complete_path, dataset)
         result = os.path.exists(complete_path) or os.path.islink(complete_path)
         dataset.close()
         return result

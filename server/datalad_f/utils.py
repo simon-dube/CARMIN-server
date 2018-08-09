@@ -74,7 +74,10 @@ def datalad_get(dataset: Dataset, path: str, follow_symlinks: bool = True) -> an
 
 def find_paths_to_get(dataset: Dataset, path: str):
     paths_to_get = list()
-    paths_to_get.append(path)
+    paths_to_get.append(get_datalad_last_symlink_or_path(path, dataset))
+    if not os.path.isdir(path):
+        return paths_to_get
+
     index = 0
     while index < len(paths_to_get):
         current_path = paths_to_get[index]
@@ -183,10 +186,14 @@ def get_datalad_last_symlink_or_path(path: str, dataset: Dataset) -> str:
     while os.path.islink(cur_path):
         path = cur_path
         cur_path = os.path.normpath(os.path.join(
-            os.path.dirname(path), os.readlink(path)))
+            os.path.realpath(os.path.dirname(path)), os.readlink(path)))
 
     if dataset and not cur_path.startswith(get_annex_objects_path(dataset)):
         path = cur_path
+
+    path = os.path.normpath(os.path.join(
+        os.path.realpath(os.path.dirname(path)), os.path.basename(path)))
+
     return path
 
 

@@ -24,8 +24,8 @@ from server.resources.helpers.execution_kill import (get_process_alive_count,
 
 
 def start_up():
-    create_dirs_for_supported_descriptors()
     pipeline_and_data_directory_present()
+    create_dirs_for_supported_descriptors()
     export_pipelines()
     properties_validation()
     find_or_create_admin()

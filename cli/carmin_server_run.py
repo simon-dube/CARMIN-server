@@ -8,6 +8,7 @@ Options:
     """
 
 import json
+import os
 from subprocess import call
 from pathlib import Path
 from docopt import docopt
@@ -29,6 +30,12 @@ def config_dict():
 
 CONFIG = config_dict()
 
+
+def set_env_vars(config: dict):
+    for key in config:
+        os.environ[key] = config.get(key)
+
+
 if __name__ == '__main__':
     args = docopt(__doc__)
     port = args.get('--port') or '8080'
@@ -48,4 +55,6 @@ if __name__ == '__main__':
                 CONFIG.get('DATA_DIRECTORY')), 'carmin-server'
         ])
     else:
+        if CONFIG:
+            set_env_vars(CONFIG)
         call(['python3', '-m', 'server', str(port)], cwd=project_root())

@@ -203,8 +203,11 @@ def get_execution_as_model(username: str,
         from server.resources.helpers.execution_results import get_output_files
         output_files, error = get_output_files(username, exe.identifier)
         path_list = []
-        for output in output_files:
-            path_list.append(output.platform_path)
+        if not error:
+            for output in output_files:
+                path_list.append(output.platform_path)
+        else:
+            path_list.append("Error retrieving outputs for execution.")
         exe.returned_files = path_list
     return exe, None
 

@@ -90,12 +90,8 @@ class Path(Resource):
         if not is_safe_for_put(requested_data_path, user):
             return marshal(INVALID_PATH), 401
 
-        # If using datalad, will get and unlock the files if they exist
+        # If using datalad, will get and unlock the files (at a later point) if they exist
         dataset = get_data_dataset()
-        success = datalad_get_unlock_if_exists(dataset, requested_data_path)
-        # TODO: Validate what type of error we want here (datalad info hidden?)
-        if not success:
-            return marshal(UNEXPECTED_ERROR), 500
 
         content, code, custom_header = None, None, None
         if request.headers.get(
@@ -104,11 +100,22 @@ class Path(Resource):
             # Request data contains base64 encoding of file or archive
             data = request.get_json(force=True, silent=True)
             content, code = put_helper_application_carmin_json(
-                data, requested_data_path, complete_path)
+                data, requested_data_path, complete_path, dataset)
 
         elif data:
             # Content-Type is not 'application/carmin+json',
             # request data is taken as raw text
+
+            # As we only want to modify a single file, we need to unlock it.
+            # If its a folder, we don't want to get and unlock it as
+            # it will crash further down the line with a proper error.
+            if dataset and not os.path.isdir(requested_data_path):
+                success = datalad_get_unlock_if_exists(
+                    dataset, requested_data_path)
+                # TODO: Validate what type of error we want here (datalad info hidden?)
+                if not success:
+                    return marshal(UNEXPECTED_ERROR), 500
+
             content, code = put_helper_raw_data(data, requested_data_path)
         elif not data:
             content, code, custom_header = put_helper_no_data(

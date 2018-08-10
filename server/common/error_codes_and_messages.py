@@ -119,4 +119,6 @@ DATASET_CANT_REMOVE = ErrorCodeAndMessage(
     205, "Dataset could not publish data from path '{}'.")
 DATASET_CANT_UNLOCK = ErrorCodeAndMessage(
     210, "Dataset could not unlock data from path '{}'.")
+DATALAD_SOME_EXTRACTIONS_FAILED = ErrorCodeAndMessage(
+    215, "The extraction of certain files failed because their latest version could not be retrieved.")
 PAGE_NOT_FOUND = ErrorCodeAndMessage(404, "Page Not Found")

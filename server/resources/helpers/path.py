@@ -12,6 +12,7 @@ import hashlib
 import base64
 import datalad
 import shutil
+from datalad.api import Dataset
 
 from typing import List
 from binascii import Error
@@ -29,7 +30,7 @@ from server.common.error_codes_and_messages import (
     ErrorCodeAndMessageMarshaller, ErrorCodeAndMessageFormatter, ErrorCodeAndMessageAdditionalDetails,
     PATH_IS_DIRECTORY, INVALID_PATH, PATH_EXISTS, INVALID_MODEL_PROVIDED,
     NOT_AN_ARCHIVE, INVALID_BASE_64, UNEXPECTED_ERROR, LIST_ACTION_ON_FILE,
-    MD5_ON_DIR, INVALID_ACTION, PATH_DOES_NOT_EXIST)
+    MD5_ON_DIR, INVALID_ACTION, PATH_DOES_NOT_EXIST, DATALAD_SOME_EXTRACTIONS_FAILED)
 
 
 def get_helper(action: str, requested_data_path: str, complete_path: str, user: User) -> (any, int):
@@ -55,10 +56,9 @@ def get_helper(action: str, requested_data_path: str, complete_path: str, user: 
         return INVALID_ACTION, 400
 
 
-def put_helper_application_carmin_json(data, requested_data_path: str, complete_path: str) -> (any, int):
+def put_helper_application_carmin_json(data, requested_data_path: str, complete_path: str, dataset: Dataset = None) -> (any, int):
     # Request data contains base64 encoding of file or archive
     model, error = UploadDataSchema().load(data or dict())
-
     if error:
         return ErrorCodeAndMessageAdditionalDetails(
             INVALID_MODEL_PROVIDED, error), 400
@@ -67,15 +67,25 @@ def put_helper_application_carmin_json(data, requested_data_path: str, complete_
             error = ErrorCodeAndMessageFormatter(
                 PATH_IS_DIRECTORY, complete_path)
             return error, 400
+
+        # As we only want to modify a single file, we need to unlock it.
+        if dataset:
+            success = datalad_get_unlock_if_exists(
+                dataset, requested_data_path)
+            # TODO: Validate what type of error we want here (datalad info hidden?)
+            if not success:
+                return UNEXPECTED_ERROR, 500
+
         path, error = upload_file(model, requested_data_path)
         if error:
             return error, 400
         return path, 201
 
     if model.upload_type == "Archive":
-        path, error = upload_archive(model, requested_data_path)
+        path, error, error_code = upload_archive(
+            model, requested_data_path, dataset)
         if error:
-            return error, 400
+            return error, error_code
         return path, 201
 
     return None, None
@@ -211,30 +221,60 @@ def upload_file(upload_data: UploadData,
 
 
 def upload_archive(upload_data: UploadData,
-                   requested_dir_path: str) -> (Path, ErrorCodeAndMessage):
+                   requested_dir_path: str, dataset: Dataset = None) -> (Path, ErrorCodeAndMessage, int):
     try:
         raw_content = base64.decodebytes(upload_data.base64_content.encode())
     except Error as e:
-        return None, ErrorCodeAndMessageFormatter(INVALID_BASE_64, e)
+        return None, ErrorCodeAndMessageFormatter(INVALID_BASE_64, e), 400
     file_name = '{}.zip'.format(requested_dir_path)
 
     try:
         with open(file_name, 'wb') as f:
             f.write(raw_content)
     except OSError:
-        return None, UNEXPECTED_ERROR
+        return None, UNEXPECTED_ERROR, 500
+
+    all_extraction_success, extraction_one_success = True, True
     try:
         with zipfile.ZipFile(file_name, mode='r') as zf:
-            zf.extractall(path=requested_dir_path)
+            if dataset:
+                all_extraction_success, extraction_one_success = zip_extract_with_dataset(
+                    requested_dir_path, zf, dataset)
+            else:
+                zf.extractall(path=requested_dir_path)
+
     except zipfile.BadZipFile as e:
         try:
             os.remove(file_name)
         except:
             pass
-        return None, ErrorCodeAndMessageFormatter(NOT_AN_ARCHIVE, e)
+        return None, ErrorCodeAndMessageFormatter(NOT_AN_ARCHIVE, e), 400
     os.remove(file_name)
+
+    if not all_extraction_success:
+        if extraction_one_success:
+            return None, DATALAD_SOME_EXTRACTIONS_FAILED, 500
+        else:
+            return None, UNEXPECTED_ERROR, 500
+
     path = Path.object_from_pathname(requested_dir_path)
-    return path, None
+    return path, None, None
+
+
+def zip_extract_with_dataset(path: str, zf: zipfile.ZipFile, dataset: Dataset) -> (bool, bool):
+    all_success = True
+    one_succees = False if len(zf.infolist()) > 0 else True
+    for zipInfo in zf.infolist():
+        if not zipInfo.is_dir():
+            # We need to get and unlock the file if it exists before extracting it
+            success = datalad_get_unlock_if_exists(
+                dataset, os.path.join(path, zipInfo.filename))
+            if not success:
+                all_success = False
+                continue
+        zf.extract(zipInfo, path)
+        one_succees = True
+    return all_success, one_succees
 
 
 def create_directory(requested_data_path: str, path_required: bool = True
@@ -338,4 +378,4 @@ def path_exists(complete_path: str) -> bool:
 
 from .executions import EXECUTIONS_DIRNAME
 from server.datalad_f.utils import (
-    get_data_dataset, datalad_get, datalad_unlock, get_datalad_last_symlink_or_path)
+    get_data_dataset, datalad_get, datalad_get_unlock_if_exists, get_datalad_last_symlink_or_path)

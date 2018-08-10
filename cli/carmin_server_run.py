@@ -33,7 +33,9 @@ CONFIG = config_dict()
 
 def set_env_vars(config: dict):
     for key in config:
-        os.environ[key] = config.get(key)
+        value = config.get(key)
+        if value:
+            os.environ[key] = value
 
 
 if __name__ == '__main__':

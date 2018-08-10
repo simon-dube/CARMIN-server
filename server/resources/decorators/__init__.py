@@ -117,7 +117,7 @@ def admin_only(func):
 def datalad_update(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if not DATALAD_AUTO_UPDATE_MANAGER:
+        if not DATALAD_AUTO_UPDATE_MANAGER or not app.config.get("DATA_REMOTE_SIBLING"):
             return func(*args, **kwargs)
 
         # Using Datalad

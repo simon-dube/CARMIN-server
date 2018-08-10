@@ -110,4 +110,4 @@ class DataladAutoUpdaterManager():
 DATALAD_AUTO_UPDATE_MANAGER = None
 if get_data_dataset():
     DATALAD_AUTO_UPDATE_MANAGER = DataladAutoUpdaterManager(
-        get_data_dataset(), 5)
+        get_data_dataset(), app.config.get("DATA_REMOTE_SIBLING_REFRESH_TIME"))

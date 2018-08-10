@@ -31,7 +31,10 @@ def main():
             print("Could not save some content of the data dataset at {}. Content may be out of sync.".format(
                 DATALAD_AUTO_UPDATE_MANAGER.dataset_path))
             exit(1)
-        DATALAD_AUTO_UPDATE_MANAGER.start()
+        # If no siblings are define, we don't have anywhere to publish to,
+        # so we do not need the update
+        if app.config.get("DATA_REMOTE_SIBLING"):
+            DATALAD_AUTO_UPDATE_MANAGER.start()
 
     try:
         app.run(host='0.0.0.0', port=port)

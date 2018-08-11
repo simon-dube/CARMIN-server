@@ -80,6 +80,9 @@ class DataladAutoUpdaterPublisher(Thread):
         self.kill_received = True
 
     def validate_sibling(self, dataset: Dataset, sibling: str):
+        if not dataset or not dataset.is_installed():
+            return False
+
         for s in dataset.siblings(result_renderer=None):
             if s.get('name') == sibling:
                 return True

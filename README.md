@@ -86,13 +86,15 @@ docker run -p 8080:8080 \
 
 ### External Data Storage with Datalad (Only tested on Linux)
 
-Instead of hosting the server data locally, the CARMIN server data can also be treated as a Datalad dataset and be hosted on any git-annex remote properly setup. Next, you will find the required steps to setup a dataset for which the data will be hosted on a Google Drive with the dataset made accessible on GitHub. These steps were only tested on Linux. They may vary for other operating systems.
+Instead of hosting the server data locally, the CARMIN server data can also be treated as a Datalad dataset and be hosted on **any** git-annex remote properly setup.
+
+Next, you will find the required steps to setup a dataset for which the data will be hosted on a Google Drive with the dataset made accessible on GitHub. These steps were only tested on Ubuntu. They may vary for different operating systems.
 
 1. Install the latest version of git-annex. For instructions on how to install git-annex, refer to the [official documentation](http://git-annex.branchable.com/install/).
 2. Install the develop branch of [git-annex-remote-googledrive](https://github.com/Lykos153/git-annex-remote-googledrive). The use of the develop branch is important as we will use a new feature that was not yet published to the master branch.
-3. Open Google Drive using your Google account and create a folder anywhere. If you don't already have one, now is the time to create one.
+3. Open Google Drive using your Google account and create a folder. If you don't already have one, now is the time to create one.
 3. Navigate to your `DATA_DIRECTORY` and launch a terminal.
-4. From there, run the following commands:
+4. From there, run the following set of commands:
 ```bash
 datalad create 
 ```
@@ -118,7 +120,24 @@ Finally, to indicate the CARMIN server to which remote the data should be publis
 export DATA_REMOTE_SIBLING=github
 ```
 
+To minimize additionnal overhead caused by Datalad, the dataset data is not published after every request, but asynchronously via a thread spawned at the server launch. In order to determine how often the dataset should be updated and published, set the following environment variable (time in seconds):
+```bash
+export DATA_REMOTE_SIBLING_REFRESH_TIME=30
+```
+
 We are now ready to use our Google Drive external data storage with our CARMIN server.
+
+#### Cache management
+As one of the advantages of using Datalad is to have more memory than what is locally available on the server, it is important to determine the maximum amount of data we want to keep locally on the CARMIN server. This can be done via two options found in the file `cache_config.py`:
+
+```python
+# Max cache size in bytes
+MAX_CACHE_SIZE = 180000000
+
+# When the cache reaches the maximum, data will be freed until reaching this treashold
+CACHE_CLEAR_TO = 100000000
+```
+
 
 ### Common Installation Problems
 

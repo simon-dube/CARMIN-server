@@ -14,7 +14,7 @@ def load_refresh_time():
             raise ValueError(
                 "Datalad refresh time must be a positive integer.")
         return refresh_time
-    except ValueError:
+    except (TypeError, ValueError):
         return DEFAULT_DATA_REMOTE_SIBLING_REFRESH_TIME
 
 

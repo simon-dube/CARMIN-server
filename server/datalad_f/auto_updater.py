@@ -12,11 +12,22 @@ from server.resources.helpers.path import get_user_data_directory
 from .cache_manager import cache_clear
 
 
+class InvalidSibling(Exception):
+    pass
+
+
 class DataladAutoUpdaterPublisher(Thread):
-    def __init__(self, dataset: Dataset, interval_sec: int):
+    def __init__(self, dataset: Dataset, sibling: str, interval_sec: int):
+        if sibling:
+            result = self.validate_sibling(dataset, sibling)
+            if not result:
+                raise InvalidSibling("Remote sibling '{}' is not valid for dataset {}. Please make sure to provide a valid sibling.".format(
+                    data_sibling, data_dataset.path))
+
         Thread.__init__(self)
         self.daemon = True
         self.dataset = dataset
+        self.sibling = sibling
         self.interval_sec = interval_sec
         self.last_interval = time()
         self.kill_received = False
@@ -40,7 +51,7 @@ class DataladAutoUpdaterPublisher(Thread):
         logger = logging.getLogger('background-thread')
         logger.info("Start %s update...", self.name)
         while not self.kill_received:
-            success, error = datalad_update(self.dataset)
+            success, error = datalad_update(self.dataset, sibling=self.sibling)
             if success:
                 logger.info("%s update complete", self.name)
                 return
@@ -50,7 +61,8 @@ class DataladAutoUpdaterPublisher(Thread):
         logger = logging.getLogger('background-thread')
         logger.info("Start %s publish...", self.name)
         while not self.kill_received:
-            success, error = datalad_publish(self.dataset)
+            success, error = datalad_publish(
+                self.dataset, sibling=self.sibling)
             if success:
                 logger.info("%s publish complete", self.name)
                 return
@@ -67,12 +79,20 @@ class DataladAutoUpdaterPublisher(Thread):
     def kill(self):
         self.kill_received = True
 
+    def validate_sibling(self, dataset: Dataset, sibling: str):
+        for s in dataset.siblings(result_renderer=None):
+            if s.get('name') == sibling:
+                return True
+        return False
+
 
 class DataladAutoUpdaterManager():
-    def __init__(self, dataset: Dataset, interval_sec: int):
+    def __init__(self, dataset: Dataset, sibling: str, interval_sec: int):
         self.dataset = dataset
+        self.sibling = sibling
         self.interval_sec = interval_sec
-        self.updater = DataladAutoUpdaterPublisher(dataset, interval_sec)
+        self.updater = DataladAutoUpdaterPublisher(
+            dataset, sibling, interval_sec)
 
     def start(self):
         self.updater.start()
@@ -83,7 +103,7 @@ class DataladAutoUpdaterManager():
     def restart(self):
         self.kill()
         self.updater = DataladAutoUpdaterPublisher(
-            self.dataset, self.interval_sec)
+            self.dataset, self.sibling, self.interval_sec)
         self.start()
 
     def force_update(self):
@@ -108,6 +128,11 @@ class DataladAutoUpdaterManager():
 
 
 DATALAD_AUTO_UPDATE_MANAGER = None
-if get_data_dataset():
-    DATALAD_AUTO_UPDATE_MANAGER = DataladAutoUpdaterManager(
-        get_data_dataset(), app.config.get("DATA_REMOTE_SIBLING_REFRESH_TIME"))
+data_dataset = get_data_dataset()
+if data_dataset:
+    data_sibling = app.config.get("DATA_REMOTE_SIBLING")
+    try:
+        DATALAD_AUTO_UPDATE_MANAGER = DataladAutoUpdaterManager(
+            data_dataset, data_sibling, app.config.get("DATA_REMOTE_SIBLING_REFRESH_TIME"))
+    finally:
+        data_dataset.close()

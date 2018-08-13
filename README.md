@@ -86,7 +86,7 @@ docker run -p 8080:8080 \
 
 ### External Data Storage with Datalad (Only tested on Linux)
 
-Instead of hosting the server data locally, the CARMIN server data can also be treated as a Datalad dataset and be hosted on **any** git-annex remote properly setup.
+Instead of hosting the server data locally, the CARMIN server data can also be treated as a Datalad dataset and be hosted on **any** git-annex remote properly setup. For more information on how to setup Datalad, please have a look at their [official documentation](https://www.datalad.org/) and [this example](https://www.datalad.org/for/data-publication) on how to use Datalad for data publication.
 
 Next, you will find the required steps to setup a dataset for which the data will be hosted on a Google Drive with the dataset made accessible on GitHub. These steps were only tested on Ubuntu. They may vary for different operating systems.
 
